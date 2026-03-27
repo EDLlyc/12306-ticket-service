@@ -1,0 +1,52 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 800
+      min-spare: 100
+    accept-count: 1000
+    max-connections: 10000
+
+logging:
+  file:
+    path: logs
+
+spring:
+  application:
+    name: 12306-ticket-service
+  
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8858
+        port: 8719
+
+  # 数据库连接
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_12306?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: YOUR_DB_USERNAME
+    password: YOUR_DB_PASSWORD
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis 连接
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000ms
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: ticket-group
+    
+# AI 智能问答配置
+ai:
+  zhipu:
+    api-key: YOUR_ZHIPU_API_KEY_HERE

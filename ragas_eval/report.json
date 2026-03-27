@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "timestamp": "2026-03-25T23:47:13",
+  "rag_api_url": "http://localhost:8080/rag/eval/ask",
+  "judge_model": "glm-4.7-flash",
+  "dataset_size": 10,
+  "rag_retry_total": 11,
+  "rag_error_count": 6,
+  "rag_last_errors": [
+    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
+    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
+    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
+    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
+    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率"
+  ],
+  "eval_retry_count": 0,
+  "thresholds": {
+    "faithfulness": 0.8,
+    "nv_context_relevance": 0.8,
+    "context_precision": 0.7
+  },
+  "scores": {
+    "faithfulness": 0.0,
+    "nv_context_relevance": 1.0,
+    "context_precision": 0.9499999999283333
+  }
+}

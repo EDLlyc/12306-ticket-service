@@ -1,0 +1,54 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      max: 800 # 提升最大工作线程数（默认200）
+      min-spare: 100 # 最小空闲线程数（默认10）
+    accept-count: 1000 # 提升排队队列长度（默认100）
+    max-connections: 10000 # 提升最大连接数（默认8192）
+
+logging:
+  file:
+    path: logs
+
+spring:
+  application:
+    name: 12306-ticket-service
+  
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+  
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8858 # 默认控制台端口
+        port: 8719 # 本地与控制台通信端口
+
+  
+  # 数据库连接
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_12306?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis 连接
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000ms
+
+# --- 关键修改：rocketmq 必须是顶层节点，不要缩进在 spring 下面 ---
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: ticket-group # 这个组名没有问题，可以正常使用
+    
+# AI 智能问答配置
+ai:
+  zhipu:
+    api-key: ${ZHIPU_API_KEY:YOUR_API_KEY_HERE}

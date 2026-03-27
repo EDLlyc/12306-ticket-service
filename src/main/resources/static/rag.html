@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12306 智能客服控制台 (RAG 测试)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; color: #333; }
+        
+        /* 登录遮罩 */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 300px; }
+        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #d1d5db; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .header-bar h1 { margin: 0; color: #1e3a8a; font-size: 1.5rem; }
+        .user-info { font-weight: bold; color: #059669; background: #d1fae5; padding: 5px 15px; border-radius: 20px; }
+
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .left-panel { display: flex; flex-direction: column; gap: 20px; }
+        .right-panel { display: flex; flex-direction: column; gap: 20px; }
+
+        .card { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #1e3a8a; font-size: 1.2rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        
+        .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn:hover { background: #2563eb; }
+        .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+        
+        input[type="file"], input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #d1d5db; border-radius: 5px; box-sizing: border-box; }
+        
+        .result-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;}
+        .loading { color: #6b7280; font-style: italic; display: none; margin-top: 10px;}
+        
+        .chat-area { height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 15px; border-radius: 5px; margin-bottom: 15px; background: #fafafa;}
+        .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 85%; width: fit-content; line-height: 1.5;}
+        .msg.user { background: #eff6ff; color: #1e40af; margin-left: auto; border-bottom-right-radius: 0;}
+        .msg.ai { background: white; border: 1px solid #e5e7eb; border-bottom-left-radius: 0; white-space: pre-wrap;}
+        
+        .flex { display: flex; gap: 10px; }
+
+        /* 订单表格样式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8fafc; color: #475569; font-weight: 600; }
+        tr:hover { background: #f1f5f9; }
+        .status-tag { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-PENDING { background: #fef3c7; color: #d97706; }
+        .status-CANCELLED { background: #fee2e2; color: #dc2626; }
+        .status-SUCCESS { background: #d1fae5; color: #059669; }
+    </style>
+</head>
+<body>
+
+<!-- 登录遮罩 -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2 style="border: none; color: #1e3a8a; font-size: 1.5rem;">客服终端认证</h2>
+        <input type="text" id="loginUsername" placeholder="请输入您的姓名 (例如: 昱辰)" onkeypress="if(event.key==='Enter') doLogin()">
+        <button class="btn" style="width: 100%; padding: 12px; font-size: 16px;" onclick="doLogin()">登 录 终 端</button>
+    </div>
+</div>
+
+<div class="header-bar" style="max-width: 1200px; margin: 0 auto 20px;">
+    <h1>🚅 12306 智能出行 Agent 购票体验台</h1>
+    <div id="userInfo" class="user-info" style="display: none;"></div>
+</div>
+
+<div class="container" id="main-content" style="opacity: 0; pointer-events: none; transition: opacity 0.5s;">
+    
+    <!-- 左侧：对话与知识库 -->
+    <div class="left-panel">
+        
+        <div class="card">
+            <h2>💬 智能购票客服助手 (支持代买票/退票/查规定)</h2>
+            <p style="font-size: 14px; color: #666;">
+                Agent 已具备查票、买票、退票、查单工具。可以直接说："帮我买合肥南到北京南明天的票"。
+            </p>
+            
+            <div class="chat-area" id="chatArea">
+                <div class="msg ai">你好！我是 12306 智能客服。<br>我可以帮你查询规章制度，也可以直接帮你购买高铁票、退票或查询订单。请问有什么可以帮您？</div>
+            </div>
+
+            <form id="askForm" class="flex" onsubmit="return false;">
+                <input type="text" id="questionInput" placeholder="输入问题或指令，例如：买票、退票、儿童票多高免票？" required>
+                <button type="button" class="btn" id="askBtn" onclick="askQuestion()">发送消息</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>📚 投喂规章制度 (知识库上传)</h2>
+            <p style="font-size: 14px; color: #666;">上传 TXT 或 PDF 文件，RAG 系统会自动学习里面的客运规则。</p>
+            <form id="uploadForm">
+                <input type="file" id="fileInput" name="file" accept=".txt,.pdf" required>
+                <button type="submit" class="btn" id="uploadBtn">开始学习</button>
+                <span class="loading" id="uploadLoading">🧠 正在阅读理解并转入向量库...</span>
+            </form>
+            <div id="uploadResult" class="result-box" style="display: none;"></div>
+        </div>
+        
+    </div>
+
+    <!-- 右侧：订单信息 -->
+    <div class="right-panel">
+        <div class="card" style="height: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
+                <h2 style="border: none; margin: 0; padding: 0;">🎫 我的车票订单</h2>
+                <div class="flex">
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px; background: #ffc107; color: #000;" onclick="initAllTrains()">🔥 一键预热库库</button>
+                    <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="loadOrders()">↻ 刷新</button>
+                </div>
+            </div>
+            
+            <div id="orderListContainer" style="margin-top: 15px; overflow-y: auto; max-height: 500px;">
+                <!-- 订单列表将渲染在这里 -->
+                <p style="color: #666; font-size: 14px; text-align: center; margin-top: 50px;">正在加载订单...</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let myToken = "";
+    let myUsername = "";
+    const sessionId = "user-" + Math.random().toString(36).substr(2, 9);
+    let sseSource = null;
+
+    // --- 1. 登录逻辑 ---
+    function doLogin() {
+        const nameNode = document.getElementById('loginUsername');
+        const name = nameNode.value.trim();
+        if(!name) { alert("请输入姓名！"); nameNode.focus(); return; }
+
+        fetch(`/user/login?username=${encodeURIComponent(name)}`, { method: 'POST' })
+            .then(res => res.text())
+            .then(token => {
+                myToken = token;
+                myUsername = name;
+                
+                // 隐藏登录框，显示主界面
+                document.getElementById('login-overlay').style.display = 'none';
+                const mainContent = document.getElementById('main-content');
+                mainContent.style.opacity = '1';
+                mainContent.style.pointerEvents = 'auto';
+                
+                // 设置用户信息
+                const userInfo = document.getElementById('userInfo');
+                userInfo.innerText = `👤 当前登录：${name}`;
+                userInfo.style.display = 'block';
+
+                // 加载订单
+                loadOrders();
+            })
+            .catch(err => {
+                alert("登录失败：" + err.message);
+            });
+    }
+
+    // --- 2. 加载订单逻辑 ---
+    function loadOrders() {
+        if (!myUsername) return;
+        
+        fetch(`/user/orders?username=${encodeURIComponent(myUsername)}`)
+            .then(res => res.json())
+            .then(orders => {
+                const container = document.getElementById('orderListContainer');
+                
+                if (orders.length === 0) {
+                    container.innerHTML = '<p style="color: #999; font-size: 14px; text-align: center; margin-top: 30px;">暂无购票记录</p>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>订单编号</th><th>车次</th><th>状态</th></tr></thead><tbody>';
+                orders.forEach(o => {
+                    let shortSn = o.order_sn.substring(0, 8) + '...';
+                    let statusClass = 'status-' + o.status;
+                    let displayStatus = o.status;
+                    if (o.status === 'PENDING') displayStatus = '已预订';
+                    if (o.status === 'CANCELLED') displayStatus = '已取消';
+                    
+                    html += `<tr>
+                        <td title="${o.order_sn}" style="font-family: monospace;">${shortSn}</td>
+                        <td style="font-weight: bold; color: #1e40af;">${o.train_number}</td>
+                        <td><span class="status-tag ${statusClass}">${displayStatus}</span></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            })
+            .catch(err => console.error("加载订单失败", err));
+    }
+
+    // --- 3. 聊天发送逻辑 (SSE) ---
+    async function askQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+        if (!question) return;
+
+        const askBtn = document.getElementById('askBtn');
+        const chatArea = document.getElementById('chatArea');
+
+        // 1. 把用户的问题显示到聊天框右侧
+        appendMessage('user', question);
+        input.value = ''; // 清空输入框
+        askBtn.disabled = true;
+        askBtn.innerText = '大模型思考规划中...';
+
+        // 2. 准备机器人回答的气泡
+        const aiMsgDiv = document.createElement('div');
+        aiMsgDiv.className = 'msg ai';
+        aiMsgDiv.innerText = '正在思考如何使用工具或检索知识库...';
+        chatArea.appendChild(aiMsgDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        let answeredText = "";
+
+        // 3. 发起 SSE 请求，带上用户名身份！
+        const url = `/rag/ask/stream?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&username=${encodeURIComponent(myUsername)}`;
+        
+        if (sseSource) sseSource.close();
+        sseSource = new EventSource(url);
+        
+        sseSource.onopen = function() {
+            aiMsgDiv.innerText = "";
+        };
+
+        sseSource.onmessage = function(event) {
+            if (event.data === "[DONE]") {
+                sseSource.close();
+                askBtn.disabled = false;
+                askBtn.innerText = '发送消息';
+                
+                // 【重要】聊天结束后，如果发现是购票或退票请求，自动刷新订单面板
+                if (question.includes("买") || question.includes("退") || question.includes("订")) {
+                    setTimeout(loadOrders, 1000);
+                }
+                return;
+            }
+            
+            // 拼接并打字机显示
+            answeredText += event.data.replace(/\\n/g, '\n');
+            aiMsgDiv.innerText = answeredText;
+            chatArea.scrollTop = chatArea.scrollHeight;
+        };
+
+        sseSource.onerror = function(err) {
+            sseSource.close();
+            if(!answeredText) {
+                aiMsgDiv.innerText = "❌ 服务器异常断开。请检查 Agent 日志。";
+            }
+            askBtn.disabled = false;
+            askBtn.innerText = '发送消息';
+        };
+    }
+
+    function appendMessage(role, text) {
+        const chatArea = document.getElementById('chatArea');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${role}`;
+        msgDiv.innerText = text;
+        chatArea.appendChild(msgDiv);
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    document.getElementById('questionInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') askQuestion();
+    });
+
+    // --- 4. 知识库上传逻辑 ---
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length === 0) return alert('请先选择文件');
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadLoading = document.getElementById('uploadLoading');
+        const uploadResult = document.getElementById('uploadResult');
+
+        uploadBtn.disabled = true;
+        uploadLoading.style.display = 'inline';
+        uploadResult.style.display = 'none';
+
+        try {
+            const response = await fetch('/rag/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+            
+            if (data.code === 200) {
+                uploadResult.style.display = 'block';
+                uploadResult.innerHTML = '✅ <strong>学习成功：</strong><br>' + data.data;
+                uploadResult.style.borderLeftColor = '#10b981';
+                uploadResult.style.background = '#ecfdf5';
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            uploadResult.style.display = 'block';
+            uploadResult.innerHTML = '❌ <strong>上传失败：</strong><br>' + error.message;
+            uploadResult.style.borderLeftColor = '#ef4444';
+            uploadResult.style.background = '#fef2f2';
+        } finally {
+            uploadBtn.disabled = false;
+            uploadLoading.style.display = 'none';
+        }
+    });
+
+    // 一键预热所有车次库存
+    async function initAllTrains() {
+        const trains = ['G1001', 'G1002', 'G305', 'D2201', 'G7501'];
+        console.log("准备预热所有车次...");
+        for (const t of trains) {
+            try {
+                await fetch(`/train/init?trainNumber=${t}`);
+            } catch (e) {}
+        }
+        alert("🎉 所有车次库存已预热到 Redis！");
+        if (typeof loadTrains === 'function') loadTrains(); // 如果 index.html
+        if (document.getElementById('orderListContainer')) loadOrders(); // 如果 rag.html
+    }
+</script>
+</body>
+</html>

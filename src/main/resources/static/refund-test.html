@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚅 12306 退票测试工具</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        .card { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 30px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+            margin-bottom: 20px;
+        }
+        h1 { 
+            margin: 0 0 20px 0; 
+            color: #1e3a8a; 
+            font-size: 1.8rem; 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #1e3a8a; 
+            font-size: 1.3rem; 
+            border-bottom: 2px solid #e5e7eb; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+        }
+        .btn { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: 600;
+            transition: 0.2s; 
+        }
+        .btn:hover { 
+            background: #2563eb; 
+            transform: translateY(-1px);
+        }
+        .btn:disabled { 
+            background: #9ca3af; 
+            cursor: not-allowed; 
+            transform: none;
+        }
+        .btn-danger {
+            background: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        input[type="text"] { 
+            width: 100%; 
+            padding: 12px 15px; 
+            margin: 10px 0; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .result-box { 
+            margin-top: 15px; 
+            padding: 15px; 
+            background: #f8fafc; 
+            border-left: 4px solid #3b82f6; 
+            border-radius: 8px; 
+            min-height: 50px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            font-family: monospace;
+        }
+        .result-box.success {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+        }
+        .result-box.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        .loading { 
+            color: #6b7280; 
+            font-style: italic; 
+            display: none; 
+            margin-top: 10px;
+        }
+        .flex { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px; 
+            font-size: 14px; 
+        }
+        th, td { 
+            padding: 12px 15px; 
+            text-align: left; 
+            border-bottom: 1px solid #eee; 
+        }
+        th { 
+            background: #f8fafc; 
+            color: #475569; 
+            font-weight: 600; 
+        }
+        tr:hover { 
+            background: #f1f5f9; 
+        }
+        .status-tag { 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .status-PENDING { 
+            background: #fef3c7; 
+            color: #d97706; 
+        }
+        .status-CANCELLED { 
+            background: #fee2e2; 
+            color: #dc2626; 
+        }
+        .status-SUCCESS { 
+            background: #d1fae5; 
+            color: #059669; 
+        }
+        .order-row {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .order-row:hover {
+            background: #dbeafe;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .nav-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: #eff6ff;
+            transition: 0.2s;
+        }
+        .nav-link:hover {
+            background: #dbeafe;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <div class="header">
+            <h1>🚅 12306 退票测试工具</h1>
+            <div class="flex">
+                <a href="/index.html" class="nav-link">← 返回主页</a>
+                <a href="/rag.html" class="nav-link">Agent 聊天 →</a>
+            </div>
+        </div>
+        <p style="color: #666; margin: 0;">
+            <strong>说明：</strong>这个页面可以直接测试退票功能，完全绕过Agent层，确保工具真正被调用。
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>🔄 快速退票（直接调用工具）</h2>
+        <form id="refundForm" class="flex" onsubmit="return false;">
+            <div class="form-group" style="grid-template-columns: 2fr 1fr; flex: 1;">
+                <input type="text" id="orderSnInput" placeholder="订单号（例如：550eb13a-b4b5-4e33-82ef-1600d1f11e806）" required>
+                <input type="text" id="usernameInput" placeholder="用户名（例如：昱辰）" required>
+            </div>
+            <button type="button" class="btn btn-danger" id="refundBtn" onclick="doRefund()">立即退票</button>
+        </form>
+        <span class="loading" id="refundLoading">⏳ 正在退票...</span>
+        <div id="refundResult" class="result-box" style="display: none;"></div>
+    </div>
+
+    <div class="card">
+        <h2>📋 我的订单列表</h2>
+        <div class="flex" style="margin-bottom: 15px;">
+            <input type="text" id="orderUsername" placeholder="输入用户名查询订单（例如：昱辰）">
+            <button class="btn" onclick="loadOrders()">查询订单</button>
+            <button class="btn btn-success" onclick="loadAllOrders()">查看全部订单</button>
+        </div>
+        <div id="orderListContainer">
+            <p style="color: #999; text-align: center; margin-top: 30px;">输入用户名后点击查询...</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🎫 一键退票所有SUCCESS状态订单</h2>
+        <p style="color: #666; margin-bottom: 15px;">
+            <strong>警告：</strong>此操作将把所有状态为SUCCESS的订单都退掉！
+        </p>
+        <div class="flex">
+            <button class="btn btn-danger" onclick="refundAllSuccessOrders()">一键退票所有SUCCESS订单</button>
+        </div>
+        <span class="loading" id="batchLoading">⏳ 正在批量退票...</span>
+        <div id="batchResult" class="result-box" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let myUsername = "";
+
+    // --- 1. 登录逻辑 ---
+    function doLogin() {
+        const nameNode = document.getElementById('loginUsername');
+        const name = nameNode.value.trim();
+        if(!name) { alert("请输入姓名！"); nameNode.focus(); return; }
+        myUsername = name;
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('main-content').style.opacity = '1';
+        document.getElementById('main-content').style.pointerEvents = 'auto';
+        loadOrders();
+    }
+
+    // --- 2. 加载订单逻辑 ---
+    async function loadOrders() {
+        const username = document.getElementById('orderUsername').value.trim();
+        if (!username) {
+            alert("请输入用户名！");
+            return;
+        }
+        myUsername = username;
+        
+        try {
+            const response = await fetch(`/user/orders?username=${encodeURIComponent(username)}`);
+            const orders = await response.json();
+            renderOrders(orders);
+        } catch (err) {
+            console.error("加载订单失败", err);
+            document.getElementById('orderListContainer').innerHTML = 
+                '<p style="color: #ef4444; text-align: center; margin-top: 30px;">加载订单失败: ' + err.message + '</p>';
+        }
+    }
+
+    async function loadAllOrders() {
+        try {
+            const response = await fetch('/test/orders/all');
+            const orders = await response.json();
+            renderOrders(orders);
+        } catch (err) {
+            console.error("加载订单失败", err);
+            document.getElementById('orderListContainer').innerHTML = 
+                '<p style="color: #ef4444; text-align: center; margin-top: 30px;">加载订单失败: ' + err.message + '</p>';
+        }
+    }
+
+    function renderOrders(orders) {
+        const container = document.getElementById('orderListContainer');
+        
+        if (orders.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center; margin-top: 30px;">暂无购票记录</p>';
+            return;
+        }
+
+        let html = '<table><thead><tr><th>订单编号</th><th>车次</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+        orders.forEach(o => {
+            let shortSn = o.order_sn.substring(0, 12) + '...';
+            let statusClass = 'status-' + o.status;
+            let displayStatus = o.status;
+            if (o.status === 'PENDING') displayStatus = '已预订';
+            if (o.status === 'CANCELLED') displayStatus = '已取消';
+            if (o.status === 'SUCCESS') displayStatus = '已支付';
+            
+            html += `<tr class="order-row" onclick="selectOrder('${o.order_sn}', '${o.username}')">
+                <td title="${o.order_sn}" style="font-family: monospace; font-size: 13px;">${shortSn}</td>
+                <td style="font-weight: bold; color: #1e40af;">${o.train_number}</td>
+                <td><span class="status-tag ${statusClass}">${displayStatus}</span></td>
+                <td>
+                    ${o.status === 'SUCCESS' ? 
+                        `<button class="btn btn-danger" style="padding: 5px 12px; font-size: 12px;" onclick="event.stopPropagation(); quickRefund('${o.order_sn}', '${o.username}')">退票</button>` : 
+                        '-'}
+                </td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function selectOrder(orderSn, username) {
+        document.getElementById('orderSnInput').value = orderSn;
+        document.getElementById('usernameInput').value = username;
+    }
+
+    function quickRefund(orderSn, username) {
+        document.getElementById('orderSnInput').value = orderSn;
+        document.getElementById('usernameInput').value = username;
+        doRefund();
+    }
+
+    // --- 3. 退票逻辑 ---
+    async function doRefund() {
+        const orderSn = document.getElementById('orderSnInput').value.trim();
+        const username = document.getElementById('usernameInput').value.trim();
+        
+        if (!orderSn || !username) {
+            alert("请填写订单号和用户名！");
+            return;
+        }
+
+        const refundBtn = document.getElementById('refundBtn');
+        const refundLoading = document.getElementById('refundLoading');
+        const refundResult = document.getElementById('refundResult');
+
+        refundBtn.disabled = true;
+        refundLoading.style.display = 'inline';
+        refundResult.style.display = 'none';
+
+        try {
+            console.log(`正在退票: orderSn=${orderSn}, username=${username}`);
+            const response = await fetch(`/test/refund?orderSn=${encodeURIComponent(orderSn)}&username=${encodeURIComponent(username)}`);
+            const result = await response.text();
+            
+            console.log("退票结果:", result);
+            refundResult.innerHTML = result;
+            refundResult.className = 'result-box success';
+            refundResult.style.display = 'block';
+
+            // 刷新订单列表
+            setTimeout(() => {
+                if (myUsername) {
+                    loadOrders();
+                } else {
+                    loadAllOrders();
+                }
+            }, 500);
+            
+        } catch (error) {
+            refundResult.innerHTML = '❌ 退票失败：' + error.message;
+            refundResult.className = 'result-box error';
+            refundResult.style.display = 'block';
+        } finally {
+            refundBtn.disabled = false;
+            refundLoading.style.display = 'none';
+        }
+    }
+
+    // --- 4. 批量退票所有SUCCESS订单 ---
+    async function refundAllSuccessOrders() {
+        if (!confirm('确定要退票所有SUCCESS状态的订单吗？')) {
+            return;
+        }
+
+        const batchLoading = document.getElementById('batchLoading');
+        const batchResult = document.getElementById('batchResult');
+
+        batchLoading.style.display = 'inline';
+        batchResult.style.display = 'none';
+
+        try {
+            const response = await fetch('/test/refund-all-success', { method: 'POST' });
+            const result = await response.text();
+            
+            batchResult.innerHTML = result;
+            batchResult.className = 'result-box success';
+            batchResult.style.display = 'block';
+
+            // 刷新订单列表
+            setTimeout(loadAllOrders, 500);
+            
+        } catch (error) {
+            batchResult.innerHTML = '❌ 批量退票失败：' + error.message;
+            batchResult.className = 'result-box error';
+            batchResult.style.display = 'block';
+        } finally {
+            batchLoading.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
