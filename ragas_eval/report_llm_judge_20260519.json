@@ -1,0 +1,225 @@
+{
+  "status": "success",
+  "timestamp": "2026-05-19T20:52:43",
+  "rag_api_url": "http://127.0.0.1:8899/rag/eval/ask",
+  "rag_eval_profile": "strict-v2",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 59,
+  "rag_retry_total": 0,
+  "rag_error_count": 0,
+  "rag_last_errors": [],
+  "eval_retry_count": 0,
+  "thresholds": {
+    "faithfulness": 0.8,
+    "nv_context_relevance": 0.8,
+    "context_precision": 0.7,
+    "context_recall": 0.7,
+    "answer_relevancy": 0.8
+  },
+  "scores": {
+    "faithfulness": 0.7348165487995997,
+    "nv_context_relevance": 0.961864406779661,
+    "context_precision": 0.8742937852478107,
+    "context_recall": 0.8587570621468926,
+    "answer_relevancy": 0.3399593700337998
+  },
+  "worst_cases_top10": [
+    {
+      "index": 0,
+      "question": "儿童票怎么购买？按什么标准区分免费、优惠票和全价票？",
+      "answer": "1. 儿童票购买规定：\n每一名持票成年人旅客可免费携带一名身高不足1.2米的儿童。身高1.2米至1.5米的儿童应购买儿童票，超过1.5米的儿童应购买全价票。免费乘车的儿童单独使用卧铺时，应另收全价卧铺票价。儿童票可凭户口簿等有效身份证件购买。",
+      "ground_truth": "按乘车日期计算年龄。未满14周岁儿童应随同成年人乘车（通勤上学学生、经铁路同意监护的儿童除外）。每名成人可免费携带1名未满6周岁且不单独占座儿童；6周岁至未满14周岁儿童应购买儿童优惠票；满14周岁应购买全价票。",
+      "contexts_count": 1,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.3380366385377154
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 1,
+      "question": "5岁儿童坐火车要买票吗？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "5岁儿童属于未满6周岁。每名成人可免费携带1名未满6周岁且不单独占座儿童乘车；如果超过1名，或该儿童需要单独占座，则应购买儿童优惠票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 2,
+      "question": "7岁儿童坐高铁要买什么票？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "7岁儿童属于6周岁至未满14周岁范围，应购买儿童优惠票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.75,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 7,
+      "question": "学生票适用于哪些学生？",
+      "answer": "学生票适用于在普通大、专院校（含民办、军事院校）及中等专业学校、技工学校就读的学生。这些学生需凭注明乘车区间的学生证购买学生票，享受硬座半价或动车组二等座7.5折优惠。同时，学生需持学生证在车站人工窗口或自助核验机上完成资质核验后方可购票。",
+      "ground_truth": "全日制普通高等学校、科研机构、军事院校、中小学、中等职业学校、技工学校以及经国家批准有学历教育资格的正规宗教院校学生和研究生，在家庭居住地与学校不在同一城市时，可按规定购买学生优惠票。",
+      "contexts_count": 1,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.44623812821489167
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 9,
+      "question": "新生和毕业生可以买吗学生票？",
+      "answer": "参考资料未明确新生和毕业生是否可以购买学生票。根据现有资料，仅规定在普通大、专院校（含民办、军事院校）及中等专业学校、技工学校就读的学生凭注明乘车区间的学生证可购买学生票，且需持学生证在车站人工窗口或自助核验机上完成资质核验后方可购票。关于新生和毕业生的具体适用情况，参考资料未明确。",
+      "ground_truth": "可以。新生凭录取通知书、毕业生凭学校书面证明，当年各可购买1次学生优惠票。",
+      "contexts_count": 1,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 19,
+      "question": "报销凭证什么时候可以开？",
+      "answer": "第四十九条 已开报销凭证退票须交回，无法交回/不可识别/不完整不予退票/退款。",
+      "ground_truth": "报销凭证应在开车前或乘车日起180日内，凭购票时使用的有效身份证件到车站窗口或自助机开具，且仅可开具一次。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.75,
+        "nv_context_relevance": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.47369269169247025
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 23,
+      "question": "导盲犬可以带上火车吗？需要什么条件？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "可以。视力残疾旅客可携带持证导盲犬乘车，进站乘车时应主动出示残疾人证、导盲犬工作证和动物健康免疫证明，导盲犬还应接受安全检查。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 24,
+      "question": "一张火车票最多可以改签几次？",
+      "answer": "一张火车票最多只能改签一次。根据参考资料明确规定\"一张车票只能改签一次\"，这是改签次数的基本限制。同时，资料还补充了不同时间段的改签规则：开车前48小时以上可改签预售期内其他列车，开车前48小时以内可改签开车前或当日其他列车；开车后的车票则可在当日24时前改签当日其他列车，但只能在票面发站办理。这些规定都是在\"只能改签一次\"这一基本原则下的具体操作细则。",
+      "ground_truth": "一张车票只能改签1次，且须在有运输能力的前提下办理。",
+      "contexts_count": 1,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.5138133739259974
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 33,
+      "question": "误乘或误降了怎么办？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "旅客误乘、误降时，应及时向站车工作人员提出。铁路可编制客运记录并安排由最近列车免费送回；但旅客出站后再提出的，不予受理。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 35,
+      "question": "列车上或出站前丢了购票证件怎么办？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "应先补票出站，由列车或车站核验后开具客运记录。自乘车日起30日内，凭临时身份证明、补开的车票和客运记录，到经停站退票窗口办理退票；原票没有出站记录的，可免费退还与原票一致区间的票款。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "answer_relevancy"
+      ]
+    }
+  ]
+}

@@ -10,14 +10,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 重排模型 (Reranker) —— 面试加分大杀器
  *
  * 功能定位：在混合检索(Dense + Sparse + RRF)粗排召回之后，
- * 利用 Cross-Encoder 架构对每一个 (query, document) 对进行点对点精排打分。
+ * 利用专用 Rerank API 对 (query, documents[]) 进行一次批量精排。
  *
  * 架构漏斗：
  * ┌──────────────────────────────────────────────┐
@@ -36,10 +36,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class ZhipuReranker {
+    private static final URI RERANK_API_URI = URI.create("https://open.bigmodel.cn/api/paas/v4/rerank");
+    private static final int MAX_TEXT_LENGTH = 4096;
+
     @Value("${ai.zhipu.api-key}")
     private String apiKey;
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    @Value("${ai.zhipu.rerank-model:rerank}")
+    private String rerankModelName;
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -55,100 +63,114 @@ public class ZhipuReranker {
             return Collections.emptyList();
         }
 
+        if (topK <= 0) {
+            return Collections.emptyList();
+        }
+
         // 如果候选数量 <= topK，无需精排直接返回
         if (candidates.size() <= topK) {
             return new ArrayList<>(candidates);
         }
 
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("【Reranker 批量精排】未配置 apiKey，降级返回粗排 Top-{}", topK);
+            return fallbackTopK(candidates, topK);
+        }
+
         try {
-            // 使用大模型进行逐对打分（Cross-Encoder 逻辑）
-            List<ScoredCandidate> scoredList = new ArrayList<>();
-
-            for (int i = 0; i < candidates.size(); i++) {
-                double score = computeRelevanceScore(query, candidates.get(i));
-                scoredList.add(new ScoredCandidate(i, candidates.get(i), score));
-            }
-
-            // 按得分降序排列取 Top-K
-            return scoredList.stream()
-                    .sorted((a, b) -> Double.compare(b.score, a.score))
-                    .limit(topK)
-                    .map(sc -> sc.text)
-                    .collect(Collectors.toList());
-
+            return rerankByBatchApi(query, candidates, topK);
         } catch (Exception e) {
-            log.error("【Reranker】精排异常，降级返回粗排结果: " + e.getMessage());
+            log.error("【Reranker 批量精排】异常，降级返回粗排 Top-{}: {}", topK, e.getMessage());
             // 降级策略：Reranker 挂了就原样返回粗排 Top-K，保证系统不宕机
-            return candidates.stream().limit(topK).collect(Collectors.toList());
+            return fallbackTopK(candidates, topK);
         }
     }
 
     /**
-     * 利用智谱 GLM 模型计算 query 与单个 candidate 的相关度得分
-     * 原理：构造一个极简的 Prompt，让大模型输出一个 0~1 的相关度分数
-     * 这本质上模拟了 Cross-Encoder 的点对点打分行为
+     * 使用官方批量 rerank API 一次性对多个候选做精排，避免逐条 chat completion。
      */
-    private double computeRelevanceScore(String query, String candidate) {
-        try {
-            String prompt = "请判断以下【参考文段】与【用户提问】的相关度。" +
-                    "只允许输出一个0到1之间的浮点数，1表示完全相关，0表示毫无关系。" +
-                    "严禁输出任何解释文字。\n\n" +
-                    "【用户提问】：" + query + "\n" +
-                    "【参考文段】：" + truncate(candidate, 500) + "\n\n" +
-                    "相关度评分：";
-
-            // 构建智谱 API 请求体
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", "glm-4-flash"); // 使用免费的 flash 版本，极速且省钱
-            requestBody.put("temperature", 0.1); // 极低温，确保评分一致性
-
-            List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(Map.of("role", "user", "content", prompt));
-            requestBody.put("messages", messages);
-
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://open.bigmodel.cn/api/paas/v4/chat/completions"))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            JsonNode root = objectMapper.readTree(response.body());
-
-            String scoreText = root.path("choices").get(0)
-                    .path("message").path("content").asText().trim();
-
-            // 提取浮点数
-            String numericPart = scoreText.replaceAll("[^0-9.]", "");
-            double score = Double.parseDouble(numericPart);
-            return Math.min(Math.max(score, 0.0), 1.0);
-
-        } catch (Exception e) {
-            log.error("【Reranker 打分异常】: " + e.getMessage());
-            return 0.5; // 异常时给中间分，不影响排序稳定性
+    private List<String> rerankByBatchApi(String query, List<String> candidates, int topK) throws Exception {
+        List<String> truncatedDocuments = new ArrayList<>(candidates.size());
+        for (String candidate : candidates) {
+            truncatedDocuments.add(truncate(candidate, MAX_TEXT_LENGTH));
         }
+
+        Map<String, Object> requestBody = new LinkedHashMap<>();
+        requestBody.put("model", normalizeRerankModel());
+        requestBody.put("query", truncate(query, MAX_TEXT_LENGTH));
+        requestBody.put("documents", truncatedDocuments);
+        requestBody.put("top_n", Math.min(topK, candidates.size()));
+        requestBody.put("return_documents", true);
+        requestBody.put("request_id", UUID.randomUUID().toString());
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(RERANK_API_URI)
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .timeout(Duration.ofSeconds(12))
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+                .build();
+
+        long startNs = System.nanoTime();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        long costMs = Duration.ofNanos(System.nanoTime() - startNs).toMillis();
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IllegalStateException("HTTP " + response.statusCode() + " body=" + response.body());
+        }
+
+        JsonNode root = objectMapper.readTree(response.body());
+        JsonNode results = root.path("results");
+        if (!results.isArray() || results.isEmpty()) {
+            throw new IllegalStateException("rerank results is empty");
+        }
+
+        List<String> reranked = new ArrayList<>(topK);
+        Set<Integer> selectedIndexes = new LinkedHashSet<>();
+        for (JsonNode result : results) {
+            int index = result.path("index").asInt(-1);
+            if (index < 0 || index >= candidates.size() || !selectedIndexes.add(index)) {
+                continue;
+            }
+            reranked.add(candidates.get(index));
+            if (reranked.size() >= topK) {
+                break;
+            }
+        }
+
+        if (reranked.isEmpty()) {
+            throw new IllegalStateException("rerank results contained no valid indexes");
+        }
+
+        for (int i = 0; i < candidates.size() && reranked.size() < topK; i++) {
+            if (selectedIndexes.add(i)) {
+                reranked.add(candidates.get(i));
+            }
+        }
+
+        log.info("【Reranker 批量精排】模型={} 候选={} 输出={} 耗时={}ms",
+                normalizeRerankModel(), candidates.size(), reranked.size(), costMs);
+        return reranked;
     }
 
     /** 截断超长文本，防止 Token 溢出 */
     private String truncate(String text, int maxLen) {
+        if (text == null) {
+            return "";
+        }
         if (text.length() <= maxLen)
             return text;
         return text.substring(0, maxLen) + "...";
     }
 
-    /** 带分数的候选项 */
-    private static class ScoredCandidate {
-        final int index;
-        final String text;
-        final double score;
-
-        ScoredCandidate(int index, String text, double score) {
-            this.index = index;
-            this.text = text;
-            this.score = score;
+    private String normalizeRerankModel() {
+        if (rerankModelName == null || rerankModelName.isBlank()) {
+            return "rerank";
         }
+        return rerankModelName;
+    }
+
+    private List<String> fallbackTopK(List<String> candidates, int topK) {
+        return new ArrayList<>(candidates.subList(0, Math.min(topK, candidates.size())));
     }
 }

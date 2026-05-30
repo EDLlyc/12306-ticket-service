@@ -1,10 +1,12 @@
 package com.ahu.ticket.controller;
 
+import com.ahu.ticket.auth.LoginTokenService;
 import com.ahu.ticket.service.IRagService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +32,7 @@ public class ReactiveRagController {
     @GetMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> ask(@RequestParam String sessionId,
                            @RequestParam String question,
-                           @RequestParam String username) {
+                           @RequestAttribute(LoginTokenService.CURRENT_USERNAME_ATTR) String username) {
         log.info("【Reactive 控制器接收请求】用户: {}, 问题: {}", username, question);
         
         // 直接返回 Flux，Spring WebFlux 引擎会自动处理订阅和分片段推送

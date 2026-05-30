@@ -1,0 +1,128 @@
+{
+  "status": "success",
+  "timestamp": "2026-04-26T23:23:22",
+  "rag_api_url": "http://localhost:8899/rag/eval/ask",
+  "rag_eval_profile": "strict-v2",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 5,
+  "rag_retry_total": 0,
+  "rag_error_count": 0,
+  "rag_last_errors": [],
+  "eval_retry_count": 0,
+  "thresholds": {
+    "faithfulness": 0.8,
+    "nv_context_relevance": 0.8,
+    "context_precision": 0.7,
+    "context_recall": 0.7,
+    "answer_relevancy": 0.8
+  },
+  "scores": {
+    "faithfulness": 0.75,
+    "nv_context_relevance": 0.9,
+    "context_precision": 0.59999999994,
+    "context_recall": 0.42666666666666664,
+    "answer_relevancy": 0.334724651895855
+  },
+  "worst_cases_top10": [
+    {
+      "index": 0,
+      "question": "儿童票怎么购买？需要什么证件？",
+      "answer": "儿童票购买根据年龄不同有不同规定：6-14周岁儿童需购买儿童优惠票；未满6周岁儿童可随成人免费乘车但不占座，若需单独占座则需购买儿童优惠票。购买儿童优惠票时，需与同行成人车票保持日期、车次、席别一致，且到站不能超过成人到站。\n\n关于证件要求，携带免费儿童(未满6周岁不占座)需在购票时申明，申明使用的证件将作为乘车凭证；购买儿童优惠票的儿童则需出示对应的优惠票证件。所有旅客均需配合实名制查验，免费儿童提供申明证件，优惠票儿童出示对应证件。未满14周岁的儿童原则上应随同成年人乘车，但通勤上学学生或经铁路同意监护的儿童除外。",
+      "ground_truth": "每名持票成年人可免费携带1名身高不足1.2米的儿童；身高1.2米至1.5米的儿童应购买儿童票，超过1.5米应购买全价票。儿童票可凭户口簿等有效身份证件购买；免费乘车儿童单独使用卧铺时，应另收全价卧铺票价。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.368166064623668
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 2,
+      "question": "退票手续费怎么算的？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "开车前15天以上退票不收退票费；开车前48小时以上按票价5%收费；24小时以上、不足48小时按票价10%收费；不足24小时按票价20%收费。开车后未改签的车票不能退票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.5,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 4,
+      "question": "可以带多少行李上高铁？",
+      "answer": "根据参考资料，旅客携带行李上高铁的限制为：每件行李最大重量为50kg，长宽高之和需在60-200cm之间。这些行李一般会随旅客列车或提前运送。此外，行动不便旅客的轮椅可以托运。需要注意的是，铁路对行李承运至交付期间可能发生的灭失、短少、污染或损坏承担责任，但不可抗力、物品自然属性、包装不良或旅客过错除外的情况不在此列。",
+      "ground_truth": "普通旅客可免费携带20千克物品，儿童10千克，外交人员35千克。每件物品长宽高之和不超过160厘米，动车组列车不超过130厘米；杆状物品不超过200厘米；重量不超过20千克。危险品、违禁品严禁携带。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.40844763557338004
+      },
+      "min_score": 0.40844763557338004,
+      "failed_metrics": [
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 1,
+      "question": "高铁上可以带宠物吗？",
+      "answer": "第五十五条 携带品自行看管，免费重量规格\n1. 儿童10kg，外交人员35kg，其他旅客20kg。\n2. 每件长宽高之和≤160cm，杆状≤200cm；动车组≤130cm，单重≤20kg。轮式代步工具需硬质包装。\n3. 老幼病残孕折叠轮椅、婴儿折叠车免费不计入。",
+      "ground_truth": "不可以。旅客不得携带任何动物乘车，导盲犬除外。其他小型活体动物可以通过铁路托运服务运输。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.4280632916059483
+      },
+      "min_score": 0.4280632916059483,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 3,
+      "question": "改签火车票有什么限制？",
+      "answer": "改签火车票的限制主要是只能办理1次，且必须在有运输能力的前提下进行。根据第二十八条改签规则，不同时间段的改签车次和费用限制有所不同：开车前48小时以上的，可免费改签预售期内列车；开车前不足48小时的，免费改签乘车日期前列车，若改签之后列车则需核收改签费；开车后当日24时前的，可免费改签当日其他列车。此外，第二十九条对改签渠道也有限制，仅可通过窗口、12306和自助机办理，其中使用12306电子支付的可以线上改签。",
+      "ground_truth": "一张车票只能改签一次。开车前48小时以上可改签预售期内其他列车；开车前48小时以内可改签开车前或当日其他列车；开车后的车票可在当日24时前改签当日其他列车，但只能在票面发站办理。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.75,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.8,
+        "answer_relevancy": 0.4689462676762786
+      },
+      "min_score": 0.4689462676762786,
+      "failed_metrics": [
+        "faithfulness",
+        "answer_relevancy"
+      ]
+    }
+  ]
+}

@@ -33,11 +33,134 @@
         .stock-low { background: #ffebeb; color: #ff4d4f; }
 
         .status-tag { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-CREATED { background: #dbeafe; color: #1d4ed8; }
+        .status-PROCESSING { background: #dbeafe; color: #1d4ed8; }
         .status-PENDING { background: #fef3c7; color: #d97706; }
         .status-CANCELLED { background: #fee2e2; color: #dc2626; }
         .status-SUCCESS { background: #d1fae5; color: #059669; }
+        .status-FAILED { background: #e5e7eb; color: #4b5563; }
+        .btn-mini { padding: 6px 10px; font-size: 12px; border-radius: 4px; }
+        .btn-copy { background: #0ea5e9; }
+        .btn-copy:hover { background: #0284c7; }
+        .btn-pay { background: #16a34a; }
+        .btn-pay:hover { background: #15803d; }
+        .btn-refund { background: #ef4444; }
+        .btn-refund:hover { background: #dc2626; }
 
         .section-title { font-size: 20px; color: var(--main-blue); margin-bottom: 15px; border-left: 4px solid var(--main-blue); padding-left: 10px; }
+
+        .jump-entry {
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #0f62fe, #38bdf8);
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 16px 35px rgba(15, 98, 254, 0.35);
+            z-index: 1000;
+        }
+        .jump-entry:hover { transform: translateY(-2px); }
+
+        .jump-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.42);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 999;
+        }
+        .jump-overlay.show { display: flex; }
+        .jump-dialog {
+            width: min(560px, 100%);
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+        }
+        .jump-dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .jump-dialog-title {
+            margin: 0;
+            font-size: 22px;
+            color: #0f172a;
+        }
+        .jump-dialog-desc {
+            margin: 8px 0 0;
+            color: #64748b;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .jump-close {
+            border: none;
+            background: #e2e8f0;
+            color: #334155;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .jump-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+        }
+        .jump-card {
+            border: 1px solid #dbeafe;
+            border-radius: 14px;
+            padding: 18px 16px;
+            background: linear-gradient(180deg, #f8fbff, #eef6ff);
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s ease;
+        }
+        .jump-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(59, 153, 252, 0.18);
+            border-color: #93c5fd;
+        }
+        .jump-card strong {
+            display: block;
+            font-size: 16px;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .jump-card span {
+            display: block;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .jump-tip {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 15px 20px; }
+            .main-content { padding: 24px 20px; }
+            .login-box { width: calc(100% - 40px); box-sizing: border-box; }
+            .user-bar { gap: 12px; flex-direction: column; align-items: flex-start; }
+            .jump-entry { right: 18px; bottom: 18px; width: 58px; height: 58px; }
+            .jump-dialog { padding: 22px; }
+        }
     </style>
 </head>
 <body>
@@ -89,6 +212,7 @@
             <th>订单编号</th>
             <th>车次</th>
             <th>状态</th>
+            <th>操作</th>
         </tr>
         </thead>
         <tbody id="order-list">
@@ -97,9 +221,80 @@
 
 </div>
 
+<button class="jump-entry" type="button" onclick="openJumpWindow()" title="打开快捷跳转">跳转</button>
+
+<div id="jump-overlay" class="jump-overlay" onclick="handleJumpOverlayClick(event)">
+    <div class="jump-dialog" role="dialog" aria-modal="true" aria-labelledby="jump-dialog-title">
+        <div class="jump-dialog-header">
+            <div>
+                <h3 id="jump-dialog-title" class="jump-dialog-title">常用页面快捷跳转</h3>
+                <p class="jump-dialog-desc">不用再手输地址。点一下就能切到 Agent 客服、退票测试页，当前登录用户也会同步到客服页。</p>
+            </div>
+            <button class="jump-close" type="button" onclick="closeJumpWindow()" aria-label="关闭">×</button>
+        </div>
+        <div class="jump-grid">
+            <button class="jump-card" type="button" onclick="goToPage('/rag.html', true)">
+                <strong>Agent 客服页</strong>
+                <span>进入智能客服对话台，直接问买票、退票和规则问题。</span>
+            </button>
+            <button class="jump-card" type="button" onclick="goToPage('/refund-test.html')">
+                <strong>退票测试页</strong>
+                <span>绕过 Agent，直接验证退票工具和订单状态变化。</span>
+            </button>
+            <button class="jump-card" type="button" onclick="goToPage('/')">
+                <strong>购票大厅首页</strong>
+                <span>回到当前首页，查看车次、订单和库存预热入口。</span>
+            </button>
+        </div>
+        <div class="jump-tip">提示：如果你已经在首页登录，点“Agent 客服页”会自动带上当前用户身份，减少一次重复登录。</div>
+    </div>
+</div>
+
 <script>
     let myToken = "";
     let myUsername = "";
+
+    function saveLoginState() {
+        localStorage.setItem('ticket_token', myToken);
+        localStorage.setItem('ticket_username', myUsername);
+    }
+
+    function clearLoginState() {
+        myToken = "";
+        myUsername = "";
+        localStorage.removeItem('ticket_token');
+        localStorage.removeItem('ticket_username');
+    }
+
+    function syncLoginStateForAgent() {
+        if (!myToken || !myUsername) {
+            return;
+        }
+        localStorage.setItem('rag_token', myToken);
+        localStorage.setItem('rag_username', myUsername);
+    }
+
+    function openJumpWindow() {
+        document.getElementById('jump-overlay').classList.add('show');
+    }
+
+    function closeJumpWindow() {
+        document.getElementById('jump-overlay').classList.remove('show');
+    }
+
+    function handleJumpOverlayClick(event) {
+        if (event.target.id === 'jump-overlay') {
+            closeJumpWindow();
+        }
+    }
+
+    function goToPage(path, syncAgentState) {
+        if (syncAgentState) {
+            syncLoginStateForAgent();
+        }
+        closeJumpWindow();
+        window.location.href = path;
+    }
 
     function login() {
         const name = document.getElementById('username').value.trim();
@@ -114,6 +309,7 @@
             .then(token => {
                 myToken = token;
                 myUsername = name;
+                saveLoginState();
                 document.getElementById('login-area').style.display = 'none';
                 document.getElementById('main-area').style.display = 'block';
                 document.getElementById('top-user-info').innerText = "在线用户：" + name;
@@ -177,34 +373,132 @@
 
     // 获取当前用户的所有订单
     function loadOrders() {
-        if (!myUsername) return;
+        if (!myToken) return;
         
         console.log("正在加载订单列表...");
-        fetch(`/user/orders?username=${encodeURIComponent(myUsername)}`)
-            .then(res => res.json())
+        fetch(`/user/orders?token=${encodeURIComponent(myToken)}`)
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || '订单接口请求失败');
+                }
+                if (!Array.isArray(data)) {
+                    throw new Error(data.message || '订单接口返回格式异常');
+                }
+                return data;
+            })
             .then(data => {
                 const list = document.getElementById('order-list');
                 list.innerHTML = '';
 
                 if (data.length === 0) {
-                    list.innerHTML = '<tr><td colspan="3">暂无购票记录</td></tr>';
+                    list.innerHTML = '<tr><td colspan="4">暂无购票记录</td></tr>';
                     return;
                 }
 
                 data.forEach(o => {
                     let displayStatus = o.status;
-                    if (o.status === 'PENDING') displayStatus = '已预订';
+                    if (o.status === 'CREATED' || o.status === 'PROCESSING') displayStatus = '处理中';
+                    if (o.status === 'PENDING') displayStatus = '待支付';
                     if (o.status === 'CANCELLED') displayStatus = '已取消';
+                    if (o.status === 'SUCCESS') displayStatus = '已支付';
+                    if (o.status === 'FAILED') displayStatus = '下单失败';
+                    const refundable = o.status === 'SUCCESS' || o.status === 'PENDING';
+                    const payable = o.status === 'PENDING';
                     
                     const row = `<tr>
                         <td style="font-family: monospace;">${o.order_sn}</td>
                         <td style="font-weight: bold; color: #1e40af;">${o.train_number}</td>
                         <td><span class="status-tag status-${o.status}">${displayStatus}</span></td>
+                        <td>
+                            <button class="btn btn-mini btn-copy" onclick="copyOrderSn('${o.order_sn}')">复制订单号</button>
+                            <button class="btn btn-mini btn-pay" onclick="payOrderBySn('${o.order_sn}')" ${payable ? '' : 'disabled'}>模拟支付</button>
+                            <button class="btn btn-mini btn-refund" onclick="refundOrderBySn('${o.order_sn}')" ${refundable ? '' : 'disabled'}>退票</button>
+                        </td>
                     </tr>`;
                     list.innerHTML += row;
                 });
             })
-            .catch(err => console.error("加载订单失败", err));
+            .catch(err => {
+                console.error("加载订单失败", err);
+                clearLoginState();
+                alert("订单加载失败：" + err.message + "。请重新登录。");
+                document.getElementById('login-area').style.display = 'block';
+                document.getElementById('main-area').style.display = 'none';
+                document.getElementById('top-user-info').innerText = "未登录";
+            });
+    }
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            return document.execCommand('copy');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function copyOrderSn(orderSn) {
+        if (!orderSn) return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(orderSn)
+                .then(() => alert("已复制订单号: " + orderSn))
+                .catch(() => {
+                    const copied = fallbackCopyText(orderSn);
+                    alert(copied ? ("已复制订单号: " + orderSn) : ("复制失败，请手动复制: " + orderSn));
+                });
+            return;
+        }
+
+        const copied = fallbackCopyText(orderSn);
+        alert(copied ? ("已复制订单号: " + orderSn) : ("复制失败，请手动复制: " + orderSn));
+    }
+
+    function refundOrderBySn(orderSn) {
+        if (!orderSn) return;
+        if (!confirm("确认退票？订单号：" + orderSn)) return;
+        fetch(`/user/refund?token=${encodeURIComponent(myToken)}&orderSn=${encodeURIComponent(orderSn)}`, { method: 'POST' })
+            .then(async res => {
+                const text = await res.text();
+                if (!res.ok) {
+                    throw new Error(text || ('HTTP ' + res.status));
+                }
+                return text;
+            })
+            .then(msg => {
+                alert(msg);
+                setTimeout(loadOrders, 800);
+                setTimeout(loadTrains, 800);
+            })
+            .catch(err => alert("退票失败：" + err.message));
+    }
+
+    function payOrderBySn(orderSn) {
+        if (!orderSn) return;
+        if (!confirm("确认模拟支付？订单号：" + orderSn)) return;
+        fetch(`/user/pay?token=${encodeURIComponent(myToken)}&orderSn=${encodeURIComponent(orderSn)}`, { method: 'POST' })
+            .then(async res => {
+                const text = await res.text();
+                if (!res.ok) {
+                    throw new Error(text || ('HTTP ' + res.status));
+                }
+                return text;
+            })
+            .then(msg => {
+                alert(msg);
+                setTimeout(loadOrders, 800);
+            })
+            .catch(err => alert("支付失败：" + err.message));
     }
     // 一键预热所有车次库存（面试加分：库存预热）
     async function initAllTrains() {
@@ -222,6 +516,27 @@
         alert("🎉 所有已知车次库存已预热到 Redis！\n现在您可以放心购票了。");
         loadTrains();
     }
+
+    (function restoreLoginState() {
+        const savedToken = localStorage.getItem('ticket_token');
+        const savedUsername = localStorage.getItem('ticket_username');
+        if (!savedToken || !savedUsername) {
+            return;
+        }
+        myToken = savedToken;
+        myUsername = savedUsername;
+        document.getElementById('login-area').style.display = 'none';
+        document.getElementById('main-area').style.display = 'block';
+        document.getElementById('top-user-info').innerText = "在线用户：" + savedUsername;
+        loadTrains();
+        loadOrders();
+    })();
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeJumpWindow();
+        }
+    });
 </script>
 </body>
 </html>

@@ -54,7 +54,6 @@ public class ThreadPoolConfig {
         // 拒绝策略：【关键防御】当队列(100)满且线程(10)满时，怎么处理新来的请求？
         // CallerRunsPolicy：由调用者所在的线程(Tomcat工作线程)去执行，起到降压缓冲的作用，绝不丢弃一个任务
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-
         // 执行初始化
         executor.initialize();
         return executor;

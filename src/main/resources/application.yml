@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: 8899
+  address: 0.0.0.0
   tomcat:
     threads:
       max: 800 # 提升最大工作线程数（默认200）
@@ -14,6 +15,12 @@ logging:
 spring:
   application:
     name: 12306-ticket-service
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:23307}/db_12306?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
   
   servlet:
     multipart:
@@ -26,29 +33,99 @@ spring:
         dashboard: localhost:8858 # 默认控制台端口
         port: 8719 # 本地与控制台通信端口
 
-  
-  # 数据库连接
-  datasource:
-    url: jdbc:mysql://localhost:3306/db_12306?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: ${DB_PASSWORD:123456}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  # ShardingSphere 配置暂保留；当前本地练习环境先走单库单表数据源
+  shardingsphere:
+    datasource:
+      names: ds0
+      ds0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:23307}/db_12306?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+        username: ${DB_USERNAME:root}
+        password: ${DB_PASSWORD:123456}
+    rules:
+      sharding:
+        tables:
+          t_order:
+            actual-data-nodes: ds0.t_order_$->{0..3}
+            table-strategy:
+              standard:
+                sharding-column: order_sn
+                sharding-algorithm-name: t_order_inline
+        sharding-algorithms:
+          t_order_inline:
+            type: INLINE
+            props:
+              algorithm-expression: t_order_$->{Math.abs(order_sn.hashCode()) % 4}
+    props:
+      sql-show: true
 
   # Redis 连接
   data:
     redis:
-      host: localhost
-      port: 6379
-      database: 0
-      timeout: 5000ms
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:26379}
+      database: ${REDIS_DB:0}
+      timeout: ${REDIS_TIMEOUT:5000ms}
+
+app:
+  mq:
+    consumers-enabled: ${APP_MQ_CONSUMERS_ENABLED:true}
+  order:
+    payment-timeout-minutes: ${APP_ORDER_PAYMENT_TIMEOUT_MINUTES:15}
+    timeout-scan-delay-ms: ${APP_ORDER_TIMEOUT_SCAN_DELAY_MS:60000}
+  stock:
+    bucket-count: 16
+  sentinel:
+    query-train:
+      interface-qps: ${QUERY_TRAIN_INTERFACE_QPS:200}
+      default-per-train-qps: ${QUERY_TRAIN_DEFAULT_PER_TRAIN_QPS:30}
+      hot-train-qps:
+        G1: ${QUERY_TRAIN_HOT_G1_QPS:10}
+        D1: ${QUERY_TRAIN_HOT_D1_QPS:12}
+    book-ticket:
+      interface-qps: ${BOOK_TICKET_INTERFACE_QPS:80}
+      default-per-train-qps: ${BOOK_TICKET_DEFAULT_PER_TRAIN_QPS:20}
+      hot-train-qps:
+        G1: ${BOOK_TICKET_HOT_G1_QPS:6}
+        D1: ${BOOK_TICKET_HOT_D1_QPS:8}
 
 # --- 关键修改：rocketmq 必须是顶层节点，不要缩进在 spring 下面 ---
 rocketmq:
-  name-server: 127.0.0.1:9876
+  name-server: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
   producer:
     group: ticket-group # 这个组名没有问题，可以正常使用
     
 # AI 智能问答配置
 ai:
   zhipu:
-    api-key: ${ZHIPU_API_KEY:YOUR_API_KEY_HERE}
+    api-key: ${ZHIPU_API_KEY:YOUR_ZHIPU_API_KEY_HERE}
+    chat-model: ${ZHIPU_CHAT_MODEL:glm-4.5-air}
+    agent-model: ${ZHIPU_AGENT_MODEL:glm-4.5-air}
+    policy-model: ${ZHIPU_POLICY_MODEL:glm-5.1}
+    policy-fast-model: ${ZHIPU_POLICY_FAST_MODEL:glm-4.5-air}
+    rerank-model: ${ZHIPU_RERANK_MODEL:rerank}
+    ocr-model: ${ZHIPU_OCR_MODEL:glm-4.6v}
+    embedding-model: ${ZHIPU_EMBEDDING_MODEL:embedding-3}
+    embedding-dimensions: ${ZHIPU_EMBEDDING_DIMENSIONS:1024}
+  ollama:
+    enabled: ${OLLAMA_ENABLED:false}
+    base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
+    light-model: ${OLLAMA_LIGHT_MODEL:qwen2.5:7b}
+    connect-timeout-ms: ${OLLAMA_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${OLLAMA_READ_TIMEOUT_MS:20000}
+  milvus:
+    uri: ${MILVUS_URI:http://127.0.0.1:19530}
+    collection-name: ${MILVUS_COLLECTION_NAME:rules_embedding3_1024}
+
+rag:
+  dev:
+    bootstrap-file: ${RAG_DEV_BOOTSTRAP_FILE:ragas_eval/12306_rules.txt}
+    bootstrap-legacy-file: ${RAG_DEV_BOOTSTRAP_LEGACY_FILE:/mnt/c/Users/12297/Desktop/rules.txt}
+  sparse:
+    opensearch:
+      enabled: ${RAG_SPARSE_OPENSEARCH_ENABLED:true}
+      endpoint: ${OPENSEARCH_ENDPOINT:http://127.0.0.1:29200}
+      index: ${OPENSEARCH_INDEX:ticket_rules_sparse}
+      username: ${OPENSEARCH_USERNAME:}
+      password: ${OPENSEARCH_PASSWORD:}

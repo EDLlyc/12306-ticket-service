@@ -88,12 +88,62 @@ public class ZhipuOfficialAgentTest {
     }
 
     @Test
+    public void testExecuteTool_bookTicketByRoute() throws Exception {
+        when(ticketTools.bookTicketByRoute(eq("2026-04-12"), eq("合肥南"), eq("北京南"), eq("testUser")))
+            .thenReturn("已根据您的路线请求，自动为您选择车次 G1001。\n🎉 购票成功");
+
+        java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("executeTool", String.class, String.class, String.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(
+            agent,
+            "bookTicketByRoute",
+            "{\"date\":\"2026-04-12\",\"fromStation\":\"合肥南\",\"toStation\":\"北京南\"}",
+            "testUser"
+        );
+
+        assertTrue(result.contains("G1001"));
+        assertTrue(result.contains("购票成功"));
+    }
+
+    @Test
+    public void testExecuteTool_queryOrderStatusUsesSessionUsername() throws Exception {
+        when(ticketTools.queryOrderStatus(eq("test-order-sn"), eq("testUser")))
+            .thenReturn("订单状态: SUCCESS");
+
+        java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("executeTool", String.class, String.class, String.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(
+            agent,
+            "queryOrderStatus",
+            "{\"orderSn\":\"test-order-sn\",\"username\":\"otherUser\"}",
+            "testUser"
+        );
+
+        assertEquals("订单状态: SUCCESS", result);
+    }
+
+    @Test
     public void testFallbackRefund_extractOrderSnAndCancel() throws Exception {
+        when(ticketTools.cancelOrder(eq("39475c6d-22fe-4e89-b802-45a835674ee7"), eq("testUser")))
+                .thenReturn("✅ 退票成功");
+
         java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("fallbackOrFailure", String.class, String.class, String.class);
         method.setAccessible(true);
         String result = (String) method.invoke(agent, "39475c6d-22fe-4e89-b802-45a835674ee7退掉这张车票", "testUser", "Call Failed");
 
-        assertEquals("❌ 请求失败：Call Failed", result);
+        assertEquals("✅ 退票成功", result);
+    }
+
+    @Test
+    public void testFallbackRefund_extractTrainNumberAndCancel() throws Exception {
+        when(ticketTools.cancelOrderByTrainNumber(eq("G7501"), eq("testUser")))
+                .thenReturn("✅ G7501 退票成功");
+
+        java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("fallbackOrFailure", String.class, String.class, String.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(agent, "G7501退。", "testUser", "javax.net.ssl.SSLHandshakeException");
+
+        assertEquals("✅ G7501 退票成功", result);
     }
 
     @Test
@@ -107,7 +157,7 @@ public class ZhipuOfficialAgentTest {
         method.setAccessible(true);
         java.util.List<?> result = (java.util.List<?>) method.invoke(agent, assistantMessage);
 
-        assertEquals(0, result.size());
+        assertEquals(1, result.size());
     }
 
     @Test
@@ -128,6 +178,23 @@ public class ZhipuOfficialAgentTest {
     }
 
     @Test
+    public void testExecuteTool_cancelOrderByTrainNumber() throws Exception {
+        when(ticketTools.cancelOrderByTrainNumber(eq("G1001"), eq("testUser")))
+            .thenReturn("✅ 按车次退票成功");
+
+        java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("executeTool", String.class, String.class, String.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(
+            agent,
+            "cancelOrderByTrainNumber",
+            "{\"trainNumber\":\"G1001\",\"username\":\"testUser\"}",
+            "testUser"
+        );
+
+        assertEquals("✅ 按车次退票成功", result);
+    }
+
+    @Test
     public void testParseArguments_doubleEncodedJson() throws Exception {
         java.lang.reflect.Method method = ZhipuOfficialAgent.class.getDeclaredMethod("parseArguments", String.class);
         method.setAccessible(true);
@@ -143,6 +210,9 @@ public class ZhipuOfficialAgentTest {
 
     @Test
     public void testExecuteToolInvocations_secondCallTextToolCall() throws Exception {
+        when(ticketTools.cancelOrder(eq("39475c6d-22fe-4e89-b802-45a835674ee7"), eq("昱辰")))
+            .thenReturn("✅ 退票成功");
+
         ChatMessage assistantMessage = ChatMessage.builder()
             .role("assistant")
             .content("抱歉，系统处理您的退票请求时遇到了技术问题。让我重新为您处理：<tool_call>cancelOrder<arg_key>orderSn</arg_key><arg_value>39475c6d-22fe-4e89-b802-45a835674ee7</arg_value><arg_key>username</arg_key><arg_value>昱辰</arg_value></tool_call>")
@@ -156,6 +226,6 @@ public class ZhipuOfficialAgentTest {
         executeMethod.setAccessible(true);
         String result = (String) executeMethod.invoke(agent, toolInvocations, "昱辰");
 
-        assertEquals("", result);
+        assertEquals("✅ 退票成功", result);
     }
 }

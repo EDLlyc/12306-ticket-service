@@ -1,5 +1,12 @@
+SET NAMES utf8mb4;
+
+DROP TABLE IF EXISTS t_order_0;
+DROP TABLE IF EXISTS t_order_1;
+DROP TABLE IF EXISTS t_order_2;
+DROP TABLE IF EXISTS t_order_3;
 DROP TABLE IF EXISTS t_order;
 DROP TABLE IF EXISTS t_train;
+DROP TABLE IF EXISTS t_chat_summary;
 
 CREATE TABLE t_train (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -8,7 +15,62 @@ CREATE TABLE t_train (
     end_station VARCHAR(50) NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME NOT NULL,
-    stock INT NOT NULL DEFAULT 0
+    stock INT NOT NULL DEFAULT 0,
+    available_stock INT NOT NULL DEFAULT 0,
+    locked_stock INT NOT NULL DEFAULT 0,
+    sold_stock INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE t_order_0 (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_sn VARCHAR(64) NOT NULL UNIQUE,
+    train_number VARCHAR(20) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    inventory_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    refund_redis_compensated TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    paid_at DATETIME NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE t_order_1 (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_sn VARCHAR(64) NOT NULL UNIQUE,
+    train_number VARCHAR(20) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    inventory_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    refund_redis_compensated TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    paid_at DATETIME NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE t_order_2 (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_sn VARCHAR(64) NOT NULL UNIQUE,
+    train_number VARCHAR(20) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    inventory_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    refund_redis_compensated TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    paid_at DATETIME NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE t_order_3 (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_sn VARCHAR(64) NOT NULL UNIQUE,
+    train_number VARCHAR(20) NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    inventory_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    refund_redis_compensated TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    paid_at DATETIME NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE t_order (
@@ -16,12 +78,27 @@ CREATE TABLE t_order (
     order_sn VARCHAR(64) NOT NULL UNIQUE,
     train_number VARCHAR(20) NOT NULL,
     username VARCHAR(50) NOT NULL,
-    status VARCHAR(20) DEFAULT 'PENDING'
+    status VARCHAR(20) DEFAULT 'PENDING',
+    inventory_status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    refund_redis_compensated TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    paid_at DATETIME NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO t_train (train_number, start_station, end_station, start_time, end_time, stock) VALUES
-('G1001', '北京南', '上海虹桥', '2026-03-25 08:00:00', '2026-03-25 12:30:00', 500),
-('G1002', '上海虹桥', '北京南', '2026-03-25 14:00:00', '2026-03-25 18:30:00', 300),
-('G305',  '合肥南', '上海虹桥', '2026-03-25 09:15:00', '2026-03-25 12:45:00', 200),
-('D2201', '合肥南', '北京南', '2026-03-25 07:30:00', '2026-03-25 11:50:00', 150),
-('G7501', '南京南', '杭州东', '2026-03-25 10:00:00', '2026-03-25 11:30:00', 400);
+CREATE TABLE t_chat_summary (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(64) NOT NULL,
+    session_id VARCHAR(128) NOT NULL,
+    summary TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_session (username, session_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO t_train (train_number, start_station, end_station, start_time, end_time, stock, available_stock, locked_stock, sold_stock) VALUES
+('G1001', '北京南', '上海虹桥', '2026-03-25 08:00:00', '2026-03-25 12:30:00', 500, 500, 0, 0),
+('G1002', '上海虹桥', '北京南', '2026-03-25 14:00:00', '2026-03-25 18:30:00', 300, 300, 0, 0),
+('G305',  '合肥南', '上海虹桥', '2026-03-25 09:15:00', '2026-03-25 12:45:00', 200, 200, 0, 0),
+('D2201', '合肥南', '北京南', '2026-03-25 07:30:00', '2026-03-25 11:50:00', 150, 150, 0, 0),
+('G7501', '南京南', '杭州东', '2026-03-25 10:00:00', '2026-03-25 11:30:00', 400, 400, 0, 0);

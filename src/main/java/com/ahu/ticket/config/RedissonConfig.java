@@ -3,19 +3,28 @@ package com.ahu.ticket.config;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RedissonConfig {
 
+    @Value("${spring.data.redis.host:127.0.0.1}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.data.redis.database:0}")
+    private int redisDatabase;
+
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
-        // 这里连接你 Docker 里的 Redis
         config.useSingleServer()
-                .setAddress("redis://127.0.0.1:6379")
-                .setDatabase(0); // 与之前的 0 号库保持一致
+                .setAddress("redis://" + redisHost + ":" + redisPort)
+                .setDatabase(redisDatabase);
         return Redisson.create(config);
     }
 }

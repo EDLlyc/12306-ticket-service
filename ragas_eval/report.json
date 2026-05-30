@@ -1,27 +1,25 @@
 {
   "status": "success",
-  "timestamp": "2026-03-25T23:47:13",
-  "rag_api_url": "http://localhost:8080/rag/eval/ask",
-  "judge_model": "glm-4.7-flash",
-  "dataset_size": 10,
-  "rag_retry_total": 11,
-  "rag_error_count": 6,
-  "rag_last_errors": [
-    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
-    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
-    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
-    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率",
-    "❌ 系统繁忙（接口限流），请稍后再试。内容: 您的账户已达到速率限制，请您控制请求频率"
-  ],
+  "timestamp": "2026-04-01T14:51:29",
+  "rag_api_url": "http://localhost:8888/rag/eval/ask",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 25,
+  "rag_retry_total": 0,
+  "rag_error_count": 0,
+  "rag_last_errors": [],
   "eval_retry_count": 0,
   "thresholds": {
     "faithfulness": 0.8,
     "nv_context_relevance": 0.8,
-    "context_precision": 0.7
+    "context_precision": 0.7,
+    "context_recall": 0.7,
+    "answer_relevancy": 0.8
   },
   "scores": {
-    "faithfulness": 0.0,
-    "nv_context_relevance": 1.0,
-    "context_precision": 0.9499999999283333
+    "faithfulness": 0.6727317086671433,
+    "nv_context_relevance": 0.94,
+    "context_precision": 0.7033333332961667,
+    "context_recall": 0.9466666666666665,
+    "answer_relevancy": 0.4159617268364669
   }
 }

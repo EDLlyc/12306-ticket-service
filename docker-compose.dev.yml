@@ -1,0 +1,189 @@
+services:
+  mysql:
+    image: mysql:8.0.41
+    container_name: ticket-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: db_12306
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "127.0.0.1:${MYSQL_PUBLISHED_PORT:-23306}:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  mysql-proxy:
+    image: alpine/socat
+    container_name: ticket-mysql-proxy
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["TCP-LISTEN:3306,fork,reuseaddr", "TCP:mysql:3306"]
+    ports:
+      - "127.0.0.1:${MYSQL_PROXY_PUBLISHED_PORT:-23307}:3306"
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: ticket-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PUBLISHED_PORT:-26379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.2
+    container_name: ticket-rocketmq-namesrv
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.2
+    container_name: ticket-rocketmq-broker
+    restart: unless-stopped
+    user: "0:0"
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_started
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      ROCKETMQ_ADVERTISE_IP: ${ROCKETMQ_ADVERTISE_IP:-127.0.0.1}
+    command: >
+      sh -lc '
+      sed "s/__ROCKETMQ_ADVERTISE_IP__/${ROCKETMQ_ADVERTISE_IP}/g" /home/rocketmq/rocketmq-5.3.2/conf/broker.conf > /tmp/broker.conf &&
+      exec sh mqbroker -n rocketmq-namesrv:9876 -c /tmp/broker.conf
+      '
+    volumes:
+      - ./docker/rocketmq/broker.conf:/home/rocketmq/rocketmq-5.3.2/conf/broker.conf:ro
+      - rocketmq_broker_logs:/home/rocketmq/logs
+      - rocketmq_broker_data:/home/rocketmq/store
+
+  etcd:
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.5.5
+    restart: unless-stopped
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    volumes:
+      - ./volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    restart: unless-stopped
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    ports:
+      - "${MINIO_API_PUBLISHED_PORT:-19000}:9000"
+      - "${MINIO_CONSOLE_PUBLISHED_PORT:-19001}:9001"
+    volumes:
+      - ./volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.4.15
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - ./volumes/milvus:/var/lib/milvus
+    ports:
+      - "${MILVUS_GRPC_PUBLISHED_PORT:-19530}:19530"
+      - "${MILVUS_HTTP_PUBLISHED_PORT:-19091}:9091"
+    depends_on:
+      - etcd
+      - minio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:1.8.6
+    container_name: ticket-sentinel-dashboard
+    restart: unless-stopped
+    ports:
+      - "${SENTINEL_PUBLISHED_PORT:-18858}:8858"
+    environment:
+      JAVA_OPTS: "-Dserver.port=8858"
+
+  opensearch:
+    image: opensearchproject/opensearch:2.15.0
+    container_name: ticket-opensearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-Admin@12345678}
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "${OPENSEARCH_HTTP_PUBLISHED_PORT:-29200}:9200"
+      - "${OPENSEARCH_TRANSPORT_PUBLISHED_PORT:-29600}:9600"
+    volumes:
+      - ./volumes/opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 20s
+      retries: 8
+
+volumes:
+  mysql_data:
+  redis_data:
+  rocketmq_broker_logs:
+  rocketmq_broker_data:

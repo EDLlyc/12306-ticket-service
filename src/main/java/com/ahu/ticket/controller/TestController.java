@@ -1,6 +1,7 @@
 package com.ahu.ticket.controller;
 
 import com.ahu.ticket.agent.ZhipuOfficialAgent;
+import com.ahu.ticket.common.Result;
 import com.ahu.ticket.service.impl.TicketTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +26,11 @@ public class TestController {
     private ZhipuOfficialAgent zhipuOfficialAgent;
 
     @GetMapping("/refund")
-    public String testRefund(
+    public Result<String> testRefund(
             @RequestParam String orderSn,
             @RequestParam String username) {
         log.info("测试退票工具: orderSn={}, username={}", orderSn, username);
-        return ticketTools.cancelOrder(orderSn, username);
+        return Result.success(ticketTools.cancelOrder(orderSn, username));
     }
 
     @GetMapping("/orders/all")
@@ -39,14 +40,14 @@ public class TestController {
     }
 
     @PostMapping("/refund-all-success")
-    public String refundAllSuccessOrders() {
+    public Result<String> refundAllSuccessOrders() {
         log.info("批量退票所有SUCCESS状态的订单");
         
         List<Map<String, Object>> successOrders = jdbcTemplate.queryForList(
                 "SELECT * FROM t_order WHERE status = 'SUCCESS'");
-        
+
         if (successOrders.isEmpty()) {
-            return "没有SUCCESS状态的订单需要退票。";
+            return Result.success("没有SUCCESS状态的订单需要退票。");
         }
         
         StringBuilder result = new StringBuilder();
@@ -62,11 +63,11 @@ public class TestController {
         }
         
         result.append("\n✅ 批量退票完成！");
-        return result.toString();
+        return Result.success(result.toString());
     }
 
     @PostMapping("/reset-order")
-    public String resetOrder(@RequestParam String orderSn) {
+    public Result<String> resetOrder(@RequestParam String orderSn) {
         log.info("重置订单状态为SUCCESS: orderSn={}", orderSn);
         
         int updated = jdbcTemplate.update(
@@ -74,14 +75,14 @@ public class TestController {
                 orderSn);
         
         if (updated > 0) {
-            return "✅ 订单 " + orderSn + " 状态已重置为SUCCESS";
+            return Result.success("✅ 订单 " + orderSn + " 状态已重置为SUCCESS");
         } else {
-            return "❌ 未找到订单 " + orderSn;
+            return Result.notFound("❌ 未找到订单 " + orderSn);
         }
     }
 
     @GetMapping("/zhipu-agent-test")
-    public String testZhipuAgent(
+    public Result<String> testZhipuAgent(
             @RequestParam String question,
             @RequestParam String username) {
         log.info("测试智谱AI官方Agent: question={}, username={}", question, username);
@@ -89,10 +90,10 @@ public class TestController {
             String sessionId = "test-session-" + System.currentTimeMillis();
             String result = zhipuOfficialAgent.chat(sessionId, question, username);
             log.info("智谱AI官方Agent返回: {}", result);
-            return result;
+            return Result.success(result);
         } catch (Exception e) {
             log.error("智谱AI官方Agent测试失败", e);
-            return "❌ 测试失败: " + e.getMessage();
+            return Result.internalError("❌ 测试失败: " + e.getMessage());
         }
     }
 }

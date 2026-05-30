@@ -1,0 +1,132 @@
+{
+  "status": "success",
+  "timestamp": "2026-04-26T22:39:26",
+  "rag_api_url": "http://localhost:8899/rag/eval/ask",
+  "rag_eval_profile": "strict-v2",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 5,
+  "rag_retry_total": 0,
+  "rag_error_count": 0,
+  "rag_last_errors": [],
+  "eval_retry_count": 0,
+  "thresholds": {
+    "faithfulness": 0.8,
+    "nv_context_relevance": 0.8,
+    "context_precision": 0.7,
+    "context_recall": 0.7,
+    "answer_relevancy": 0.8
+  },
+  "scores": {
+    "faithfulness": 0.5,
+    "nv_context_relevance": 0.75,
+    "context_precision": 0.26666666664,
+    "context_recall": 0.26666666666666666,
+    "answer_relevancy": 0.18682489748457698
+  },
+  "worst_cases_top10": [
+    {
+      "index": 0,
+      "question": "儿童票怎么购买？需要什么证件？",
+      "answer": "",
+      "ground_truth": "每一名持票成年人旅客可免费携带一名身高不足1.2米的儿童。身高1.2米至1.5米的儿童应购买儿童票，超过1.5米的儿童应购买全价票。免费乘车的儿童单独使用卧铺时，应另收全价卧铺票价。儿童票可凭户口簿等有效身份证件购买。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 1,
+      "question": "高铁上可以带宠物吗？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "旅客不得携带任何动物乘车（导盲犬除外）。导盲犬应佩戴导盲犬标识和防止伤人的装具，由持有残疾人证的旅客本人牵领。其他小型活体动物可通过铁路托运服务运输。",
+      "contexts_count": 1,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 2,
+      "question": "退票手续费怎么算的？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "开车前15天（不含）以上退票的，不收取退票费。开车前48小时以上的按票价5%收费，24小时以上、不足48小时的按票价10%收费，不足24小时的按票价20%收费。开车后未改签的车票不能退票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.75,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 4,
+      "question": "可以带多少行李上高铁？",
+      "answer": "其他旅客免费携带20kg，儿童10kg，外交人员35kg。每件长宽高之和≤160cm，杆状≤200cm；动车组≤130cm，单重≤20kg。轮式代步工具需硬质包装，老幼病残孕折叠轮椅免费不计入。",
+      "ground_truth": "每位旅客可免费携带物品：儿童10千克、普通旅客20千克、外交人员35千克。每件物品外部尺寸长、宽、高之和不超过160厘米（动车组列车130厘米），杆状物品不超过200厘米，重量不超过20千克。危险品、违禁品严禁携带。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.3333333333,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.45360293109518
+      },
+      "min_score": 0.3333333333,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 3,
+      "question": "改签火车票有什么限制？",
+      "answer": "改签仅限1次，需有运输能力。不同时间段有不同改签规则，部分情况需核收改签费。已开报销凭证、现金购票仅可窗口改签。",
+      "ground_truth": "一张车票只能改签一次。开车前48小时以上可改签预售期内其他列车，开车前48小时以内可改签开车前或当日其他列车。开车后的车票可在当日24时前改签当日其他列车，但只能在票面发站办理。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.4805215563277049
+      },
+      "min_score": 0.4805215563277049,
+      "failed_metrics": [
+        "context_recall",
+        "answer_relevancy"
+      ]
+    }
+  ]
+}

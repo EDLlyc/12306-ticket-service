@@ -1,0 +1,222 @@
+{
+  "status": "success",
+  "timestamp": "2026-05-19T22:32:40",
+  "rag_api_url": "http://127.0.0.1:8899/rag/eval/ask",
+  "rag_eval_profile": "strict-v2",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 59,
+  "rag_retry_total": 0,
+  "rag_error_count": 0,
+  "rag_last_errors": [],
+  "eval_retry_count": 0,
+  "thresholds": {
+    "faithfulness": 0.8,
+    "nv_context_relevance": 0.8,
+    "context_precision": 0.7,
+    "context_recall": 0.7,
+    "answer_relevancy": 0.8
+  },
+  "scores": {
+    "faithfulness": 0.9065609206623663,
+    "nv_context_relevance": 0.9322033898305084,
+    "context_precision": 0.8813559321338982,
+    "context_recall": 0.9350282485875706,
+    "answer_relevancy": 0.4241845922188146
+  },
+  "worst_cases_top10": [
+    {
+      "index": 19,
+      "question": "报销凭证什么时候可以开？",
+      "answer": "报销凭证需在开车前或乘车日起180日内，凭购票证件到窗口/自助机开具。这意味着旅客可以在列车出发前或者乘车后的180天内，携带购票时使用的有效证件，前往车站售票窗口或自助设备申请开具报销凭证。需要注意的是，行程信息提示和报销凭证本身不能作为乘车的有效凭证，仅用于报销用途。",
+      "ground_truth": "报销凭证应在开车前或乘车日起180日内，凭购票时使用的有效身份证件到车站窗口或自助机开具，且仅可开具一次。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.6923076923076923,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.4134602083376087
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 31,
+      "question": "改签后票价变高或变低怎么处理？",
+      "answer": "改签后票价变高需补交差额，票价变低的情况参考资料未明确说明。\n\n根据第三十二条\"改签票价高补差额\"的规定，当改签后新票价高于原票价时，乘客需要补足票价差额。这是改签票价处理的基本原则。然而，对于改签后票价低于原票价的情况，参考资料中没有明确说明如何处理，可能需要根据具体车站或铁路部门的规定执行。其他改签规则还包括开车前48小时以上可免费改签预售期内列车，开车前不足48小时可免费改签乘车日期前列车，以及开车后当日24时前可免费改签当日其他列车等。",
+      "ground_truth": "改签后票价高于原票价的，应补收差额；改签后票价低于原票价的，应退还差额，并按规定核收退票费。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 38,
+      "question": "学生票或优待票乘车时拿不出证件会怎样？",
+      "answer": "参考资料未明确学生票或优待票乘车时拿不出证件的具体后果。根据第十九条和第二十条规定，铁路企业按规定在车站进出站和列车上查验车票与证件，优惠票和优待票需查验对应证件，旅客需配合实名制查验并出示对应证件。此外，针对学生优惠票，第十六条明确每学年乘车前需办理资质核验，若未核验乘车需先补差价，到站30日内核验合格可退补票款，且不收退票费。",
+      "ground_truth": "优惠票或优待票旅客不能出示相应证件，或不符合优惠、优待条件的，应补收全价票价差额。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999666667,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 39,
+      "question": "无票乘车又拒绝补票，会怎么样？",
+      "answer": "无票乘车又拒绝补票，铁路部门可以拒绝安排按实际区间补票，未用票款不退，并可能根据第四条规定拒绝进站、上车或责令下车，未用票款不退，合同终止。这种情况属于无票乘车未主动补票的行为，按照规定需要补票并加收已乘区间应补票价50%。如果乘客拒绝补票，铁路工作人员有权拒绝其继续乘车，且已购票款不予退还。",
+      "ground_truth": "列车长可责令其下车，并移交前方三等以上车站或县、市所在地车站处理，同时追补票款。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.7777777777777778,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.3333333333,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.3812036586979347
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 42,
+      "question": "开车前20天退票收手续费吗？",
+      "answer": "第五十四条 铁路企业可临时调整退票办法。\n补充说明：退票费计算规则\n1. 开车前15天以上办理退票的，不收退票费。\n2. 开车前48小时以上的，按票价5%核收退票费。\n3. 开车前24小时以上、不足48小时的，按票价10%核收退票费。\n4. 开车前不足24小时的，按票价20%核收退票费。",
+      "ground_truth": "不收。开车前15天以上办理退票的，不收退票费。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 0.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.5103351279276468
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "nv_context_relevance",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 44,
+      "question": "列车晚点导致我没乘车，可以退票吗？",
+      "answer": "可以退票，且不收取退票费。根据参考资料第三十四条规定，铁路责任导致无法按票乘车的情况，重新安排席位高价不补、低价退差额不收退票费。列车晚点属于铁路责任范畴，因此您因列车晚点而未能乘车，有权要求退票且无需支付退票费。建议您尽快通过12306官方渠道或车站售票窗口办理退票手续，以确保您的权益得到保障。",
+      "ground_truth": "可以。列车晚点时，旅客在开车前办理退票的，退还全部票款且不收退票费；联程车票符合规定的，可一并退票且不收退票费。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.1111111111111111,
+        "nv_context_relevance": 0.5,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.46685782493395295
+      },
+      "min_score": 0.1111111111111111,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 18,
+      "question": "车站窗口、代理点或列车补票时，可以用哪些身份证件？",
+      "answer": "在车站窗口、代理点或列车补票时，可使用的有效身份证件包括：居民身份证（含临时）、户口簿、护照、出入境通行证、旅行证、出生医学证明、军官证/警官证等军警证件、海员证、临时乘车身份证明、港澳台居住证/通行证、外国人永久居留身份证/护照/出入境证、外国人签证回执、护照等。",
+      "ground_truth": "窗口、代理人和列车购票或补票时，可使用居民身份证（含临时居民身份证）、户口簿、护照、出入境通行证、旅行证、出生医学证明、军警证件、海员证、临时乘车身份证明、港澳台居住证或通行证、外国人永久居留身份证、外国护照等规定的有效身份证件。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.3302407267787974
+      },
+      "min_score": 0.3302407267787974,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 29,
+      "question": "火车票可以通过哪些渠道改签？",
+      "answer": "火车票可以通过窗口、12306线上平台和自助机三种渠道改签。根据第二十九条规定，改签渠道包括窗口、12306和自助机。其中，12306电子支付可线上改签，而已开报销凭证或现金购票的仅可通过窗口改签。",
+      "ground_truth": "改签可通过车站窗口、12306网站（含客户端）和自动售票机办理。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.33229293583848474
+      },
+      "min_score": 0.33229293583848474,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 28,
+      "question": "火车票可以变更到站吗？",
+      "answer": "火车票可以变更到站。根据参考资料，车票变更到站是允许的，但需要满足一定条件。变更到站只能在开车前48小时以上办理，且已托运行李时需要同时办理行李变更或取消。变更到站只能办理一次，且需要有运输能力保障。在变更到站时，如果是在装运前变更行李到站，需要补退运费差额；如果是装运后变更行李到站，则原运费不退，需要补新到站运费。需要注意的是，如果车票变更或退票后未办理行李变更，到站时将另收2倍运费。",
+      "ground_truth": "可以，但须在开车前48小时以上办理，且应在有运输能力的前提下办理；已办理行李托运的，还应先办理托运变更或取消托运手续。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.9090909090909091,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.3333333333,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4932515730093739
+      },
+      "min_score": 0.3333333333,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 43,
+      "question": "提前两天退票要扣多少手续费？",
+      "answer": "第四十六条 不予退票情况\n1. 开车后。\n2. 开车后改签的车票。\n3. 加收票款。\n4. 车补车票（学生资质未核验、丢失证件补票除外）。",
+      "ground_truth": "按规则，开车前48小时以上退票按票价5%核收退票费；由于“以上”包含本数，提前两天即48小时办理退票，按5%核收退票费。",
+      "contexts_count": 3,
+      "scores": {
+        "faithfulness": 0.8,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.3333333333,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.41526199320166374
+      },
+      "min_score": 0.3333333333,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    }
+  ]
+}

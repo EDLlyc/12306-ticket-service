@@ -36,6 +36,7 @@
         .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 85%; width: fit-content; line-height: 1.5;}
         .msg.user { background: #eff6ff; color: #1e40af; margin-left: auto; border-bottom-right-radius: 0;}
         .msg.ai { background: white; border: 1px solid #e5e7eb; border-bottom-left-radius: 0; white-space: pre-wrap;}
+        .trace-meta { margin: -6px 0 16px; padding: 8px 10px; border-radius: 6px; background: #f8fafc; color: #64748b; font-size: 12px; line-height: 1.6; border: 1px dashed #cbd5e1; white-space: pre-wrap; max-width: 85%; }
         
         .flex { display: flex; gap: 10px; }
 
@@ -45,9 +46,17 @@
         th { background: #f8fafc; color: #475569; font-weight: 600; }
         tr:hover { background: #f1f5f9; }
         .status-tag { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-CREATED { background: #dbeafe; color: #1d4ed8; }
+        .status-PROCESSING { background: #dbeafe; color: #1d4ed8; }
         .status-PENDING { background: #fef3c7; color: #d97706; }
         .status-CANCELLED { background: #fee2e2; color: #dc2626; }
         .status-SUCCESS { background: #d1fae5; color: #059669; }
+        .status-FAILED { background: #e5e7eb; color: #4b5563; }
+        .btn-mini { padding: 4px 8px; font-size: 12px; border-radius: 4px; }
+        .btn-copy { background: #0ea5e9; }
+        .btn-copy:hover { background: #0284c7; }
+        .btn-pay { background: #16a34a; }
+        .btn-pay:hover { background: #15803d; }
     </style>
 </head>
 <body>
@@ -126,6 +135,18 @@
     const sessionId = "user-" + Math.random().toString(36).substr(2, 9);
     let sseSource = null;
 
+    function saveLoginState() {
+        localStorage.setItem('rag_token', myToken);
+        localStorage.setItem('rag_username', myUsername);
+    }
+
+    function clearLoginState() {
+        myToken = "";
+        myUsername = "";
+        localStorage.removeItem('rag_token');
+        localStorage.removeItem('rag_username');
+    }
+
     // --- 1. 登录逻辑 ---
     function doLogin() {
         const nameNode = document.getElementById('loginUsername');
@@ -137,6 +158,7 @@
             .then(token => {
                 myToken = token;
                 myUsername = name;
+                saveLoginState();
                 
                 // 隐藏登录框，显示主界面
                 document.getElementById('login-overlay').style.display = 'none';
@@ -159,10 +181,19 @@
 
     // --- 2. 加载订单逻辑 ---
     function loadOrders() {
-        if (!myUsername) return;
+        if (!myToken) return;
         
-        fetch(`/user/orders?username=${encodeURIComponent(myUsername)}`)
-            .then(res => res.json())
+        fetch(`/user/orders?token=${encodeURIComponent(myToken)}`)
+            .then(async res => {
+                const orders = await res.json();
+                if (!res.ok) {
+                    throw new Error(orders.message || '订单接口请求失败');
+                }
+                if (!Array.isArray(orders)) {
+                    throw new Error(orders.message || '订单接口返回格式异常');
+                }
+                return orders;
+            })
             .then(orders => {
                 const container = document.getElementById('orderListContainer');
                 
@@ -171,27 +202,274 @@
                     return;
                 }
 
-                let html = '<table><thead><tr><th>订单编号</th><th>车次</th><th>状态</th></tr></thead><tbody>';
+                let html = '<table><thead><tr><th>订单编号</th><th>车次</th><th>状态</th><th>操作</th></tr></thead><tbody>';
                 orders.forEach(o => {
                     let shortSn = o.order_sn.substring(0, 8) + '...';
                     let statusClass = 'status-' + o.status;
                     let displayStatus = o.status;
-                    if (o.status === 'PENDING') displayStatus = '已预订';
+                    if (o.status === 'CREATED' || o.status === 'PROCESSING') displayStatus = '处理中';
+                    if (o.status === 'PENDING') displayStatus = '待支付';
                     if (o.status === 'CANCELLED') displayStatus = '已取消';
+                    if (o.status === 'SUCCESS') displayStatus = '已支付';
+                    if (o.status === 'FAILED') displayStatus = '下单失败';
+                    const payButton = o.status === 'PENDING'
+                        ? `<button class="btn btn-mini btn-pay" onclick="payOrderBySn('${o.order_sn}')">模拟支付</button>`
+                        : '';
                     
                     html += `<tr>
                         <td title="${o.order_sn}" style="font-family: monospace;">${shortSn}</td>
                         <td style="font-weight: bold; color: #1e40af;">${o.train_number}</td>
                         <td><span class="status-tag ${statusClass}">${displayStatus}</span></td>
+                        <td>
+                            <button class="btn btn-mini btn-copy" onclick="copyOrderSn('${o.order_sn}')">复制订单号</button>
+                            ${payButton}
+                        </td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
                 container.innerHTML = html;
             })
-            .catch(err => console.error("加载订单失败", err));
+            .catch(err => {
+                console.error("加载订单失败", err);
+                clearLoginState();
+                alert("订单加载失败：" + err.message + "。请重新登录。");
+                document.getElementById('login-overlay').style.display = 'flex';
+                const mainContent = document.getElementById('main-content');
+                mainContent.style.opacity = '0';
+                mainContent.style.pointerEvents = 'none';
+                document.getElementById('userInfo').style.display = 'none';
+            });
     }
 
-    // --- 3. 聊天发送逻辑 (SSE) ---
+    function shouldUseStreaming(question) {
+        return !!question && !!question.trim();
+    }
+
+    function maybeRefreshOrders(question) {
+        if (/买|购|订|退|订单|支付|付款/.test(question)) {
+            setTimeout(loadOrders, 1000);
+        }
+    }
+
+    function renderTrace(traceNode, trace) {
+        if (!traceNode || !trace) return;
+
+        const stageMs = trace.stageMs || {};
+        const stageOrder = ['guardrails', 'entity_extract', 'local_action', 'context_bridge_lookup', 'context_bridge_policy_scope', 'context_bridge', 'intent_route', 'query_refine_llm', 'query_refine', 'embedding', 'semantic_cache_lookup', 'retriever_and_model_setup', 'agent_execute', 'llm_first_token', 'llm_sync_generate', 'llm_visible_complete', 'llm_stream_tail', 'llm_close_tail', 'semantic_cache_store'];
+        const stageLabels = {
+            guardrails: '安全检查',
+            entity_extract: '实体提取',
+            local_action: '本地快路径',
+            context_bridge_lookup: '桥接读取',
+            context_bridge_policy_scope: '作用域桥接',
+            context_bridge: '上下文桥接',
+            intent_route: '意图路由',
+            query_refine_llm: '改写调用',
+            query_refine: '问题重写',
+            embedding: 'Embedding',
+            semantic_cache_lookup: '语义缓存',
+            retriever_and_model_setup: '检索与建流',
+            agent_execute: 'Agent执行',
+            llm_first_token: '首Token',
+            llm_sync_generate: '同步生成',
+            llm_visible_complete: '可见完成',
+            llm_stream_tail: '流式尾部',
+            llm_close_tail: '关闭尾部',
+            semantic_cache_store: '缓存写回'
+        };
+
+        const stageParts = stageOrder
+            .filter(key => Object.prototype.hasOwnProperty.call(stageMs, key))
+            .map(key => `${stageLabels[key] || key} ${stageMs[key]}ms`);
+
+        const lines = [];
+        lines.push(`路由: ${trace.intent || '-'} | 来源: ${trace.intentSource || '-'} | 专家: ${trace.expert || '-'} | 上下文承接: ${trace.contextBridgeApplied ? '是' : '否'} | 总耗时: ${trace.totalMs ?? '-'}ms`);
+        if (trace.plan) {
+            lines.push(`计划: ${trace.plan}${trace.planReplanned ? ' | 已重规划' : ''}${trace.planFallback ? ' | 已回退旧Agent' : ''}`);
+        }
+        if (trace.contextBridgeSource) {
+            const reasonMap = {
+                question_not_context_dependent: '当前问题不是追问，未做桥接',
+                journal_expired: '上一轮上下文已过期，未承接',
+                topic_switched: '检测到换题，未承接旧上下文',
+                no_history_found: '没有可用历史，未承接',
+                history_read_failed: '读取历史失败，未承接'
+            };
+            lines.push(`桥接来源: ${trace.contextBridgeSource}${trace.contextBridgeApplied ? '' : ` | 说明: ${reasonMap[trace.contextBridgeReason] || trace.contextBridgeReason || '未承接'}`}`);
+        }
+        if (trace.bridgedFrom) {
+            lines.push(`承接上轮问题: ${trace.bridgedFrom}`);
+        }
+        if (trace.entityProfile) {
+            lines.push(`事实记忆: ${trace.entityProfile}`);
+        }
+        if (trace.processedQuestion && trace.processedQuestion !== trace.bridgedFrom) {
+            lines.push(`改写后问题: ${trace.processedQuestion}`);
+        }
+        if (Array.isArray(trace.hitArticles) && trace.hitArticles.length) {
+            lines.push(`命中条款: ${trace.hitArticles.join(' | ')}`);
+        }
+        if (stageParts.length) {
+            lines.push(`阶段耗时: ${stageParts.join(' | ')}`);
+        }
+
+        traceNode.innerText = lines.join('\n');
+        traceNode.style.display = 'block';
+    }
+
+    function createTypewriterRenderer(targetNode, onDrain) {
+        let displayedText = "";
+        let pendingText = "";
+        let renderTimer = null;
+        let streamDone = false;
+
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function stopTimerIfDone() {
+            if (streamDone && pendingText.length === 0 && renderTimer) {
+                clearInterval(renderTimer);
+                renderTimer = null;
+                if (onDrain) onDrain(displayedText);
+            }
+        }
+
+        function tick() {
+            if (!pendingText.length) {
+                stopTimerIfDone();
+                return;
+            }
+
+            const nextChunk = pendingText.slice(0, 3);
+            pendingText = pendingText.slice(nextChunk.length);
+            displayedText += nextChunk;
+            targetNode.innerText = displayedText;
+            scrollToBottom();
+            stopTimerIfDone();
+        }
+
+        function ensureTimer() {
+            if (!renderTimer) {
+                renderTimer = setInterval(tick, 16);
+            }
+        }
+
+        return {
+            reset() {
+                displayedText = "";
+                pendingText = "";
+                streamDone = false;
+                targetNode.innerText = "";
+                if (renderTimer) {
+                    clearInterval(renderTimer);
+                    renderTimer = null;
+                }
+            },
+            push(text) {
+                if (!text) {
+                    return;
+                }
+                pendingText += text;
+                ensureTimer();
+            },
+            complete() {
+                streamDone = true;
+                if (!pendingText.length) {
+                    stopTimerIfDone();
+                } else {
+                    ensureTimer();
+                }
+            },
+            hasContent() {
+                return displayedText.length > 0 || pendingText.length > 0;
+            }
+        };
+    }
+
+    async function askQuestionSync(question, aiMsgDiv, traceNode, askBtn) {
+        const response = await fetch(`/rag/ask?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&token=${encodeURIComponent(myToken)}`);
+        const data = await response.json();
+        let resolveDrain;
+        const drained = new Promise(resolve => {
+            resolveDrain = resolve;
+        });
+        const renderer = createTypewriterRenderer(aiMsgDiv, () => {
+            maybeRefreshOrders(question);
+            resolveDrain();
+        });
+        renderer.reset();
+        if (traceNode) {
+            traceNode.style.display = 'block';
+            traceNode.innerText = '当前已回退到同步接口，阶段耗时仅对流式链路展示。';
+        }
+        if (data && data.code === 200 && data.data) {
+            renderer.push(data.data);
+            renderer.complete();
+            await drained;
+            return;
+        }
+        renderer.push((data && data.message) ? `❌ ${data.message}` : "❌ 问答失败，请稍后重试。");
+        renderer.complete();
+        await drained;
+    }
+
+    function askQuestionStream(question, aiMsgDiv, traceNode, askBtn) {
+        const renderer = createTypewriterRenderer(aiMsgDiv, () => {
+            askBtn.disabled = false;
+            askBtn.innerText = '发送消息';
+            maybeRefreshOrders(question);
+        });
+        const url = `/rag/ask/stream?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&token=${encodeURIComponent(myToken)}`;
+
+        if (sseSource) sseSource.close();
+        sseSource = new EventSource(url);
+
+        sseSource.onopen = function() {
+            renderer.reset();
+            if (traceNode) {
+                traceNode.style.display = 'none';
+                traceNode.innerText = '';
+            }
+        };
+
+        sseSource.addEventListener('meta', function(event) {
+            try {
+                renderTrace(traceNode, JSON.parse(event.data));
+            } catch (err) {
+                console.warn('解析 trace 元信息失败', err);
+            }
+        });
+
+        sseSource.onmessage = function(event) {
+            if (event.data === "[DONE]") {
+                sseSource.close();
+                renderer.complete();
+                return;
+            }
+
+            renderer.push(event.data.replace(/\\n/g, '\n'));
+        };
+
+        sseSource.onerror = function() {
+            sseSource.close();
+            if (!renderer.hasContent()) {
+                askQuestionSync(question, aiMsgDiv, traceNode, askBtn)
+                    .catch(() => {
+                        aiMsgDiv.innerText = "❌ 服务器异常断开，请稍后重试。";
+                    })
+                    .finally(() => {
+                        askBtn.disabled = false;
+                        askBtn.innerText = '发送消息';
+                    });
+                return;
+            }
+            renderer.complete();
+        };
+    }
+
+    // --- 3. 聊天发送逻辑 ---
     async function askQuestion() {
         const input = document.getElementById('questionInput');
         const question = input.value.trim();
@@ -211,47 +489,31 @@
         aiMsgDiv.className = 'msg ai';
         aiMsgDiv.innerText = '正在思考如何使用工具或检索知识库...';
         chatArea.appendChild(aiMsgDiv);
+        const traceDiv = document.createElement('div');
+        traceDiv.className = 'trace-meta';
+        traceDiv.style.display = 'none';
+        chatArea.appendChild(traceDiv);
         chatArea.scrollTop = chatArea.scrollHeight;
 
-        let answeredText = "";
-
-        // 3. 发起 SSE 请求，带上用户名身份！
-        const url = `/rag/ask/stream?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&username=${encodeURIComponent(myUsername)}`;
-        
-        if (sseSource) sseSource.close();
-        sseSource = new EventSource(url);
-        
-        sseSource.onopen = function() {
-            aiMsgDiv.innerText = "";
-        };
-
-        sseSource.onmessage = function(event) {
-            if (event.data === "[DONE]") {
-                sseSource.close();
+        try {
+            if (shouldUseStreaming(question)) {
+                askBtn.innerText = '正在执行操作...';
+                askQuestionStream(question, aiMsgDiv, traceDiv, askBtn);
+            } else {
+                if (sseSource) {
+                    sseSource.close();
+                    sseSource = null;
+                }
+                askBtn.innerText = '正在查询政策...';
+                await askQuestionSync(question, aiMsgDiv, traceDiv, askBtn);
                 askBtn.disabled = false;
                 askBtn.innerText = '发送消息';
-                
-                // 【重要】聊天结束后，如果发现是购票或退票请求，自动刷新订单面板
-                if (question.includes("买") || question.includes("退") || question.includes("订")) {
-                    setTimeout(loadOrders, 1000);
-                }
-                return;
             }
-            
-            // 拼接并打字机显示
-            answeredText += event.data.replace(/\\n/g, '\n');
-            aiMsgDiv.innerText = answeredText;
-            chatArea.scrollTop = chatArea.scrollHeight;
-        };
-
-        sseSource.onerror = function(err) {
-            sseSource.close();
-            if(!answeredText) {
-                aiMsgDiv.innerText = "❌ 服务器异常断开。请检查 Agent 日志。";
-            }
+        } catch (err) {
+            aiMsgDiv.innerText = "❌ 问答失败，请稍后重试。";
             askBtn.disabled = false;
             askBtn.innerText = '发送消息';
-        };
+        }
     }
 
     function appendMessage(role, text) {
@@ -261,6 +523,59 @@
         msgDiv.innerText = text;
         chatArea.appendChild(msgDiv);
         chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.top = '-9999px';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            return document.execCommand('copy');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
+    function copyOrderSn(orderSn) {
+        if (!orderSn) return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(orderSn)
+                .then(() => appendMessage('ai', `📋 已复制订单号：${orderSn}`))
+                .catch(() => {
+                    const copied = fallbackCopyText(orderSn);
+                    appendMessage('ai', copied ? `📋 已复制订单号：${orderSn}` : `❌ 复制失败，请手动复制：${orderSn}`);
+                });
+            return;
+        }
+
+        const copied = fallbackCopyText(orderSn);
+        appendMessage('ai', copied ? `📋 已复制订单号：${orderSn}` : `❌ 复制失败，请手动复制：${orderSn}`);
+    }
+
+    function payOrderBySn(orderSn) {
+        if (!orderSn) return;
+        if (!confirm("确认模拟支付？订单号：" + orderSn)) return;
+        fetch(`/user/pay?token=${encodeURIComponent(myToken)}&orderSn=${encodeURIComponent(orderSn)}`, { method: 'POST' })
+            .then(async res => {
+                const text = await res.text();
+                if (!res.ok) {
+                    throw new Error(text || ('HTTP ' + res.status));
+                }
+                return text;
+            })
+            .then(msg => {
+                appendMessage('ai', msg);
+                setTimeout(loadOrders, 800);
+            })
+            .catch(err => appendMessage('ai', "支付失败：" + err.message));
     }
 
     document.getElementById('questionInput').addEventListener('keypress', function(e) {
@@ -285,7 +600,7 @@
         uploadResult.style.display = 'none';
 
         try {
-            const response = await fetch('/rag/upload', { method: 'POST', body: formData });
+            const response = await fetch(`/rag/upload?token=${encodeURIComponent(myToken)}`, { method: 'POST', body: formData });
             const data = await response.json();
             
             if (data.code === 200) {
@@ -320,6 +635,24 @@
         if (typeof loadTrains === 'function') loadTrains(); // 如果 index.html
         if (document.getElementById('orderListContainer')) loadOrders(); // 如果 rag.html
     }
+
+    (function restoreLoginState() {
+        const savedToken = localStorage.getItem('rag_token');
+        const savedUsername = localStorage.getItem('rag_username');
+        if (!savedToken || !savedUsername) {
+            return;
+        }
+        myToken = savedToken;
+        myUsername = savedUsername;
+        document.getElementById('login-overlay').style.display = 'none';
+        const mainContent = document.getElementById('main-content');
+        mainContent.style.opacity = '1';
+        mainContent.style.pointerEvents = 'auto';
+        const userInfo = document.getElementById('userInfo');
+        userInfo.innerText = `👤 当前登录：${savedUsername}`;
+        userInfo.style.display = 'block';
+        loadOrders();
+    })();
 </script>
 </body>
 </html>

@@ -3,11 +3,15 @@ package com.ahu.ticket.config;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowItem;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRuleManager;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Sentinel 规则配置类
@@ -17,18 +21,54 @@ import java.util.List;
 @Configuration
 public class SentinelConfig {
 
+    private final SentinelRuleProperties ruleProperties;
+
+    public SentinelConfig(SentinelRuleProperties ruleProperties) {
+        this.ruleProperties = ruleProperties;
+    }
+
     @PostConstruct
     public void initFlowRules() {
-        List<FlowRule> rules = new ArrayList<>();
+        List<FlowRule> flowRules = new ArrayList<>();
+        flowRules.add(buildInterfaceFlowRule("queryTrain", ruleProperties.getQueryTrain().getInterfaceQps()));
+        flowRules.add(buildInterfaceFlowRule("bookTicket", ruleProperties.getBookTicket().getInterfaceQps()));
+        FlowRuleManager.loadRules(flowRules);
 
-        // 为 queryTrain 接口定义一个硬编码的限流规则
-        FlowRule rule = new FlowRule();
-        rule.setResource("queryTrain");
-        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
-        // 为了演示，我们将 QPS 限制为 100000（一秒只能查一次）
-        rule.setCount(100000);
+        List<ParamFlowRule> paramRules = new ArrayList<>();
+        paramRules.add(buildPerTrainParamFlowRule("queryTrain",
+                ruleProperties.getQueryTrain().getDefaultPerTrainQps(),
+                ruleProperties.getQueryTrain().getHotTrainQps()));
+        paramRules.add(buildPerTrainParamFlowRule("bookTicket",
+                ruleProperties.getBookTicket().getDefaultPerTrainQps(),
+                ruleProperties.getBookTicket().getHotTrainQps()));
+        ParamFlowRuleManager.loadRules(paramRules);
+    }
 
-        rules.add(rule);
-        FlowRuleManager.loadRules(rules);
+    private FlowRule buildInterfaceFlowRule(String resource, double interfaceQps) {
+        FlowRule interfaceRule = new FlowRule();
+        interfaceRule.setResource(resource);
+        interfaceRule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        interfaceRule.setCount(interfaceQps);
+        return interfaceRule;
+    }
+
+    private ParamFlowRule buildPerTrainParamFlowRule(String resource,
+                                                     double defaultPerTrainQps,
+                                                     Map<String, Integer> hotTrainQps) {
+        ParamFlowRule paramRule = new ParamFlowRule(resource);
+        paramRule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        paramRule.setParamIdx(0);
+        paramRule.setCount(defaultPerTrainQps);
+
+        List<ParamFlowItem> hotItems = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : hotTrainQps.entrySet()) {
+            ParamFlowItem item = new ParamFlowItem();
+            item.setClassType(String.class.getName());
+            item.setObject(entry.getKey());
+            item.setCount(entry.getValue());
+            hotItems.add(item);
+        }
+        paramRule.setParamFlowItemList(hotItems);
+        return paramRule;
     }
 }

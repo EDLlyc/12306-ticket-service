@@ -1,0 +1,58 @@
+\documentclass{resume}
+
+\usepackage{enumitem}
+\usepackage{linespacing_fix}
+\usepackage{cite}
+
+\begin{document}
+\pagenumbering{gobble}
+
+\noindent
+\name{Yuchen Li}
+\otherInfo{Class of 2027}{Target Role: Java Backend Engineering Intern / Agent Engineering Intern}{}{}
+\otherInfo{Available to start soon \textperiodcentered\ 5 days/week \textperiodcentered\ 6 months}{Email: edllyc041202@gmail.com}{}{}
+
+\vspace{-0.8em}
+
+\section{Education}
+\datedsubsection{\textbf{Anhui University} -- B.Eng. in Digital Media Technology}{Sep 2023 -- Jun 2027}
+\begin{itemize}[parsep=0.5ex]
+    \item \textbf{Research \& Awards}: First-author student paper under external review at \textit{IEEE Transactions on Medical Imaging (IEEE TMI)}, proposing a topology-prior connectivity loss function; awarded \textbf{Second Prize} in the Mathematical Contest in Modeling, \textbf{Third Prize} in the Provincial Mathematical Modeling Competition, and a \textbf{Third-Class Academic Scholarship}.
+    \item \textbf{English Proficiency}: \textbf{IELTS 7.0}; able to read and reproduce English technical documentation and academic papers.
+    \item \textbf{Academic Performance}: Average score \textbf{87.6/100}; completed core CS coursework including Data Structures, Operating Systems, Computer Networks, and Databases.
+\end{itemize}
+
+\section{Technical Skills}
+\begin{itemize}[parsep=0.5ex]
+    \item \textbf{Java / JVM / Concurrency}: Solid foundation in Java, including collections, concurrent programming, and the JVM memory model; experienced in asynchronous orchestration and high-concurrency workflow design using \textbf{CompletableFuture}.
+    \item \textbf{Spring Boot / MyBatis-Plus / MySQL}: Proficient in backend service development with \textbf{Spring Boot}, \textbf{MyBatis-Plus}, and \textbf{MySQL}; hands-on experience with index optimization, transaction isolation, SQL tuning, and persistence-layer implementation in production-style business flows.
+    \item \textbf{Redis / Redisson / Lua / RocketMQ / Sentinel / Docker / Maven / Git}: Experienced with Redis-based caching and concurrency control using \textbf{Redis}, \textbf{Redisson}, and \textbf{Lua}; familiar with multi-level caching, distributed locking, atomic inventory deduction, MQ transactional and delayed messaging, as well as rate limiting and circuit-breaking; comfortable with basic \textbf{Docker} containerization and day-to-day engineering collaboration using \textbf{Maven} and \textbf{Git}.
+    \item \textbf{LangChain4j / WebFlux / Reactor / RAG / Ollama / RAGAS / LLM-as-a-Judge}: Experienced in building agent applications with \textbf{LangChain4j}, \textbf{Spring WebFlux}, and \textbf{Project Reactor}; familiar with AiServices-driven entity extraction, query rewriting, intent routing, and complexity assessment; hands-on with \textbf{Plan-and-Execute}, \textbf{Parent-Child} chunking, hybrid retrieval with \textbf{Milvus/OpenSearch}, \textbf{RRF}, \textbf{BM25+}, reranking, and local/offline evaluation using \textbf{Ollama}, \textbf{RAGAS}, and \textbf{LLM-as-a-Judge}.
+\end{itemize}
+
+\section{Project Experience}
+
+\datedsubsection{\textbf{12306 High-Concurrency Ticketing Core Gateway} (Backend Architecture Development)}{Jan 2026 -- May 2026}
+\textbf{Tech Stack}: Spring Boot, Redis, Redisson, Caffeine, RBloomFilter, RocketMQ, Sentinel, MyBatis-Plus\\
+\textbf{Project Summary}: Built core workflows for a 12306-style high-concurrency ticketing system, covering ticket query, booking, and refund scenarios, with a focus on cache governance, inventory pre-deduction, transactional consistency, and closed-loop compensation.\\
+\textbf{Key Contributions}:
+\begin{enumerate}[parsep=0.5ex]
+    \item \textbf{Caching and High-Concurrency Governance}: Built a multi-level cache with \textbf{Caffeine + Redis + RBloomFilter}; combined \textbf{Redisson} distributed locks with \textbf{CompletableFuture}-based singleflight request coalescing to handle hot-key rebuilds. In load testing on the ticket-query hot path, the system reached \textbf{5409.54 QPS} at \textbf{800 concurrent users}, with \textbf{0\% HTTP error rate} and \textbf{344 ms P95 latency}.
+    \item \textbf{Inventory Deduction and Segmented Stock Model}: Implemented atomic inventory pre-deduction using \textbf{Redis Lua}; designed a \textbf{Segmented Stock} model to spread hotspot traffic and reduce inventory contention and overselling risk under high-concurrency booking scenarios.
+    \item \textbf{Asynchronous Ordering and Transactional Messaging}: Connected Redis pre-deduction, order persistence, and MySQL inventory deduction through \textbf{RocketMQ transactional messages} and \textbf{TransactionListener}, forming an asynchronous peak-shaving and eventual-consistency pipeline. In a booking load test with \textbf{200 users}, the system achieved \textbf{510.94 TPS}, \textbf{0\% error rate}, and \textbf{318 ms P95 latency}; no overselling was observed, and post-async consistency checks passed.
+    \item \textbf{Refund Compensation and Stability Protection}: Designed a refund workflow using a \textbf{refund} status field and an idempotent \textbf{Redis Lua} compensation mechanism to prevent duplicate stock restoration caused by MQ retries; implemented automatic closure of unpaid timed-out orders with \textbf{RocketMQ delayed messages}; added \textbf{Sentinel}-based rate limiting and hotspot protection.
+\end{enumerate}
+
+\datedsubsection{\textbf{12306 Intelligent Digital Employee} (Reactive Multi-Agent / RAG System Development)}{Jan 2026 -- May 2026}
+\textbf{Tech Stack}: Spring WebFlux, Project Reactor, LangChain4j, Milvus, OpenSearch, Zhipu GLM, Ollama, RAGAS\\
+\textbf{Project Summary}: Built a reactive multi-agent and RAG execution framework for 12306 policy Q\&A and ticket booking/refund/change/query scenarios, covering intent routing, plan execution, hybrid retrieval, memory management, and streaming response delivery.\\
+\textbf{Key Contributions}:
+\begin{enumerate}[parsep=0.5ex]
+    \item \textbf{Multi-Expert Intent Routing}: Designed a multi-expert intent scoring mechanism to score \textbf{ACTION}, \textbf{TICKET}, \textbf{RAG}, and \textbf{CHITCHAT} intents in parallel; combined top score, score margin, and confidence thresholds to make layered routing decisions, reducing misrouting across action requests, ticket queries, and policy Q\&A.
+    \item \textbf{Policy Routing and Semantic Bridging}: Built context-dependency detection, policy classification, and policy-evidence judgment pipelines with \textbf{AiServices}; combined \textbf{session-prefix isolation}, \textbf{ConversationBridge}, and locally deployed lightweight models via \textbf{Ollama} to improve follow-up continuity and semantic consistency across expert switching.
+    \item \textbf{Plan-and-Execute Workflow}: Upgraded the traditional ReAct pattern to \textbf{Plan-and-Execute}; used a Planner to output JSON plans for decomposing complex booking and refund requests, while an Executor invoked ticketing tools and consumed structured \textbf{ToolObservation} results; added a \textbf{Replan} mechanism to recover from execution-time exceptions.
+    \item \textbf{Hybrid Retrieval and Planned RAG}: Applied \textbf{Parent-Child} chunking together with dual-channel retrieval using \textbf{Milvus Dense Retrieval + OpenSearch BM25}; improved answer quality for complex policy Q\&A with \textbf{RRF} fusion, \textbf{BM25+} scoring, and reranking; introduced sub-question decomposition for complex queries to support \textbf{Planned RAG}.
+    \item \textbf{Evaluation, Streaming Interaction, and Memory}: Ran \textbf{RAGAS} evaluation on a curated benchmark set, achieving \textbf{0.881 context precision} and \textbf{0.935 context recall}; implemented streaming output with \textbf{WebFlux + Project Reactor + Sinks.Many}; integrated Redis-based semantic caching and a dual-layer memory design combining a \textbf{short-term sliding window} with \textbf{long-term summary compression}.
+\end{enumerate}
+
+\end{document}

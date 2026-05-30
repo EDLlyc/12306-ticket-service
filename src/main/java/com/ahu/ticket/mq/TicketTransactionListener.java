@@ -1,17 +1,17 @@
 package com.ahu.ticket.mq;
 
+import com.ahu.ticket.order.OrderInventoryStateService;
+import com.ahu.ticket.service.StockBucketService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionListener;
 import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.Message;
 
-import java.util.Collections;
+import java.time.LocalDateTime;
 
 /**
  * RocketMQ 事务消息监听器
@@ -29,24 +29,13 @@ import java.util.Collections;
 public class TicketTransactionListener implements RocketMQLocalTransactionListener {
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private StockBucketService stockBucketService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    /**
-     * Redis Lua 原子扣减脚本（与 TicketController 保持一致）
-     */
-    private static final String LUA_STOCK_DECREASE =
-            "if (redis.call('exists', KEYS[1]) == 1) then " +
-            "    local stock = tonumber(redis.call('get', KEYS[1])); " +
-            "    if (stock > 0) then " +
-            "        redis.call('decr', KEYS[1]); " +
-            "        return stock - 1; " +
-            "    end; " +
-            "    return -1; " +
-            "end; " +
-            "return -2;";
+    @Autowired
+    private OrderInventoryStateService orderInventoryStateService;
 
     /**
      * 第一步：Half 半消息发送成功后，Broker 回调此方法执行本地事务
@@ -65,22 +54,19 @@ public class TicketTransactionListener implements RocketMQLocalTransactionListen
 
         try {
             // ====== 第 1 步：Redis Lua 原子扣减库存 ======
-            String stockKey = "train:stock:" + trainNumber;
-            DefaultRedisScript<Long> script = new DefaultRedisScript<>(LUA_STOCK_DECREASE, Long.class);
-            Long result = redisTemplate.execute(script, Collections.singletonList(stockKey));
-
-            if (result == null || result < 0) {
-                log.warn("【MQ 事务】Redis 库存不足或 Key 不存在，事务回滚。trainNumber={}, result={}",
-                        trainNumber, result);
+            StockBucketService.ReserveResult reserveResult = stockBucketService.reserve(trainNumber, orderSn);
+            if (!reserveResult.isSuccess()) {
+                log.warn("【MQ 事务】Redis 扣减失败，事务回滚。trainNumber={}, orderSn={}, code={}",
+                        trainNumber, orderSn, reserveResult.getCode());
                 return RocketMQLocalTransactionState.ROLLBACK;
             }
 
-            log.info("【MQ 事务】Redis 扣减成功，剩余库存: {}，正在落库预订单...", result);
+            log.info("【MQ 事务】Redis 扣减成功，bucket={}, 剩余总库存: {}，正在落库预订单...",
+                    reserveResult.getBucketIndex(), reserveResult.getRemainingTotal());
 
             // ====== 第 2 步：本地订单预记录落库(幂等：UNIQUE KEY idx_order_sn) ======
-            jdbcTemplate.update(
-                    "INSERT INTO t_order (order_sn, train_number, username, status) VALUES (?, ?, ?, 'PENDING')",
-                    orderSn, trainNumber, username);
+            LocalDateTime now = LocalDateTime.now();
+            orderInventoryStateService.insertCreatedOrder(orderSn, trainNumber, username, now);
 
             log.info("【MQ 事务】本地预订单落库成功，COMMIT 确认消息。orderSn={}", orderSn);
             return RocketMQLocalTransactionState.COMMIT;
@@ -94,7 +80,7 @@ public class TicketTransactionListener implements RocketMQLocalTransactionListen
             log.error("【MQ 事务】本地事务执行异常，事务回滚。orderSn={}", orderSn, e);
             // 回滚：Redis 库存需要回补（补偿策略）
             try {
-                redisTemplate.opsForValue().increment("train:stock:" + trainNumber);
+                stockBucketService.releaseByOrderSn(trainNumber, orderSn);
                 log.info("【MQ 事务】Redis 库存已回补。trainNumber={}", trainNumber);
             } catch (Exception ex) {
                 log.error("【MQ 事务】Redis 库存回补失败，需人工介入！trainNumber={}", trainNumber, ex);

@@ -144,6 +144,14 @@
             font-size: 12px; 
             font-weight: bold; 
         }
+        .status-CREATED {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .status-PROCESSING {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
         .status-PENDING { 
             background: #fef3c7; 
             color: #d97706; 
@@ -239,6 +247,7 @@
 
 <script>
     let myUsername = "";
+    let myToken = "";
 
     // --- 1. 登录逻辑 ---
     function doLogin() {
@@ -259,11 +268,22 @@
             alert("请输入用户名！");
             return;
         }
+        const userChanged = myUsername && myUsername !== username;
         myUsername = username;
         
         try {
-            const response = await fetch(`/user/orders?username=${encodeURIComponent(username)}`);
+            if (!myToken || userChanged) {
+                const loginResponse = await fetch(`/user/login?username=${encodeURIComponent(username)}`, { method: 'POST' });
+                myToken = await loginResponse.text();
+            }
+            const response = await fetch(`/user/orders?token=${encodeURIComponent(myToken)}`);
             const orders = await response.json();
+            if (!response.ok) {
+                throw new Error(orders.message || '订单接口请求失败');
+            }
+            if (!Array.isArray(orders)) {
+                throw new Error(orders.message || '订单接口返回格式异常');
+            }
             renderOrders(orders);
         } catch (err) {
             console.error("加载订单失败", err);
@@ -297,7 +317,8 @@
             let shortSn = o.order_sn.substring(0, 12) + '...';
             let statusClass = 'status-' + o.status;
             let displayStatus = o.status;
-            if (o.status === 'PENDING') displayStatus = '已预订';
+            if (o.status === 'CREATED' || o.status === 'PROCESSING') displayStatus = '处理中';
+            if (o.status === 'PENDING') displayStatus = '待支付';
             if (o.status === 'CANCELLED') displayStatus = '已取消';
             if (o.status === 'SUCCESS') displayStatus = '已支付';
             

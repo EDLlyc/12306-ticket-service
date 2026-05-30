@@ -47,3 +47,19 @@ user.yaml
 
 # Backup sensitive config
 src/main/resources/application-local.yml
+
+### IDE and Local Agent Exclusions ###
+.agents
+.codex
+.tools
+.run
+ragas_eval/.venv-linux
+crawl-output
+~
+html-report*
+load-test-runs
+
+
+
+
+

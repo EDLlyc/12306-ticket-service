@@ -1,0 +1,483 @@
+{
+  "status": "success",
+  "timestamp": "2026-04-15T10:12:14",
+  "rag_api_url": "http://localhost:8888/rag/eval/ask",
+  "rag_eval_profile": "strict-v2",
+  "judge_model": "glm-4-plus",
+  "dataset_size": 25,
+  "rows": [
+    {
+      "index": 7,
+      "question": "候补购票是什么意思？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "候补购票是当旅客遇到车票售完的情况时，可以通过12306系统提交候补订单并预付票款。当有旅客退票或有余票时，系统将按照候补排队顺序自动为旅客兑现车票。兑现成功后将通知旅客；若截止兑现时间仍未成功，系统将自动退还预付款。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 17,
+      "question": "没抢到票怎么办？候补能自动退款吗？",
+      "answer": "抱歉，当前规章未提及此内容。",
+      "ground_truth": "候补购票是当旅客遇到车票售完的情况时，可以通过12306系统提交候补订单并预付票款。当有旅客退票或有余票时，系统将按照候补排队顺序自动为旅客兑现车票。兑现成功后将通知旅客；若截止兑现时间仍未成功，系统将自动退还预付款。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.0,
+        "nv_context_relevance": 0.0,
+        "context_precision": 0.0,
+        "context_recall": 0.0,
+        "answer_relevancy": 0.0
+      },
+      "min_score": 0.0,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 13,
+      "question": "火车票可以改签几次？开车后还能改吗？",
+      "answer": "改签可办1次，有运输能力前提下。开车后当日24时前可免费改签当日其他列车，改签后列车核收改签费。",
+      "ground_truth": "一张车票只能改签一次。开车前48小时以上可改签预售期内其他列车，开车前48小时以内可改签开车前或当日其他列车。开车后的车票可在当日24时前改签当日其他列车，但只能在票面发站办理。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.3225531005975188
+      },
+      "min_score": 0.3225531005975188,
+      "failed_metrics": [
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 12,
+      "question": "提前两天退票要扣多少手续费？",
+      "answer": "开车前48小时以上按票价5%计，不足48小时按10%计。",
+      "ground_truth": "开车前15天（不含）以上退票的，不收取退票费。开车前48小时以上的按票价5%收费，24小时以上、不足48小时的按票价10%收费，不足24小时的按票价20%收费。开车后未改签的车票不能退票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.5,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.36768332933091297
+      },
+      "min_score": 0.36768332933091297,
+      "failed_metrics": [
+        "faithfulness",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 8,
+      "question": "电子客票怎么进站乘车？",
+      "answer": "持购票时使用的居民身份证等有效身份证件原件，通过自助闸机完成实名制验证和进出站检票。",
+      "ground_truth": "购买电子客票后，旅客持购票时使用的居民身份证等有效身份证件原件，即可通过自助闸机完成实名制验证和进出站检票。无需取纸质车票，刷身份证或手机二维码即可进站。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.368444977703463
+      },
+      "min_score": 0.368444977703463,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 15,
+      "question": "学生票一年能买几次？",
+      "answer": "每学年可购4次单程优惠票，限家庭至院校/实习地。",
+      "ground_truth": "在普通大、专院校（含民办、军事院校）及中等专业学校、技工学校就读的学生凭注明乘车区间的学生证可购买学生票，享受硬座半价或动车组二等座7.5折优惠。每学年可购买4次。学生需持学生证在车站人工窗口或自助核验机上完成资质核验后方可购票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.38320781859106595
+      },
+      "min_score": 0.38320781859106595,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 6,
+      "question": "高铁能携带酒精或白酒吗？",
+      "answer": "旅客可携带封闭好的瓶装白酒，数量上限6瓶，散装白酒禁止携带；酒精度超过56度的限带2瓶。酒精属于易燃易爆品，严禁携带乘车。",
+      "ground_truth": "旅客可以携带封闭好的瓶装白酒，数量上限为6瓶。但散装白酒不允许带上车；酒精度超过56度的白酒限带2瓶。酒精（医用消毒酒精等）属于易燃易爆品，严禁携带乘车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4021570702343812
+      },
+      "min_score": 0.4021570702343812,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 2,
+      "question": "退票手续费怎么算的？",
+      "answer": "开车前8天（含）以上不收退票费；48小时以上按5%，24-48小时按10%，不足24小时按20%。",
+      "ground_truth": "开车前15天（不含）以上退票的，不收取退票费。开车前48小时以上的按票价5%收费，24小时以上、不足48小时的按票价10%收费，不足24小时的按票价20%收费。开车后未改签的车票不能退票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.8,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.4059160410523527
+      },
+      "min_score": 0.4059160410523527,
+      "failed_metrics": [
+        "context_precision",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 22,
+      "question": "56度以上的白酒能带上火车吗？",
+      "answer": "旅客可携带封闭好的瓶装白酒，数量上限6瓶，但酒精度超过56度的白酒限带2瓶。",
+      "ground_truth": "旅客可以携带封闭好的瓶装白酒，数量上限为6瓶。但散装白酒不允许带上车；酒精度超过56度的白酒限带2瓶。酒精（医用消毒酒精等）属于易燃易爆品，严禁携带乘车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4113023423741882
+      },
+      "min_score": 0.4113023423741882,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 16,
+      "question": "坐高铁最多能带几瓶白酒？",
+      "answer": "旅客可携带封闭好的瓶装白酒，数量上限为6瓶，酒精度超过56度的限带2瓶。",
+      "ground_truth": "旅客可以携带封闭好的瓶装白酒，数量上限为6瓶。但散装白酒不允许带上车；酒精度超过56度的白酒限带2瓶。酒精（医用消毒酒精等）属于易燃易爆品，严禁携带乘车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4198184884932361
+      },
+      "min_score": 0.4198184884932361,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 5,
+      "question": "学生票打几折？怎么认证？",
+      "answer": "学生票硬座半价，动车组二等座7.5折。需持学生证在12306或车站窗口办理资质核验。",
+      "ground_truth": "在普通大、专院校（含民办、军事院校）及中等专业学校、技工学校就读的学生凭注明乘车区间的学生证可购买学生票，享受硬座半价或动车组二等座7.5折优惠。每学年可购买4次。学生需持学生证在车站人工窗口或自助核验机上完成资质核验后方可购票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4199032281466239
+      },
+      "min_score": 0.4199032281466239,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 20,
+      "question": "儿童免票的身高标准是多少？",
+      "answer": "身高不足1.2米的儿童可免费乘车，1.2米至1.5米的儿童应购买儿童票。",
+      "ground_truth": "每一名持票成年人旅客可免费携带一名身高不足1.2米的儿童。身高1.2米至1.5米的儿童应购买儿童票，超过1.5米的儿童应购买全价票。免费乘车的儿童单独使用卧铺时，应另收全价卧铺票价。儿童票可凭户口簿等有效身份证件购买。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.42979902272054255
+      },
+      "min_score": 0.42979902272054255,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 9,
+      "question": "高铁上可以吸烟吗？",
+      "answer": "所有动车组列车全列禁烟，包括车厢连接处和卫生间。吸烟将触发烟雾报警导致列车降速或停车，违反者将被罚款并纳入铁路征信系统。",
+      "ground_truth": "所有动车组列车（含复兴号和和谐号）全列禁烟，包括车厢连接处、卫生间等所有区域。在动车组上吸烟将触发烟雾报警导致列车降速或停车，违反者将被处以500元以上2000元以下罚款，并纳入铁路征信系统，180天内限制购票乘坐火车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.43023567084216763
+      },
+      "min_score": 0.43023567084216763,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 24,
+      "question": "在高铁上吸烟的罚款金额是多少？会被限制坐车吗？",
+      "answer": "在动车组上吸烟将被处以500元以上2000元以下罚款，并纳入铁路征信系统，180天内限制购票乘坐火车。",
+      "ground_truth": "所有动车组列车（含复兴号和和谐号）全列禁烟，包括车厢连接处、卫生间等所有区域。在动车组上吸烟将触发烟雾报警导致列车降速或停车，违反者将被处以500元以上2000元以下罚款，并纳入铁路征信系统，180天内限制购票乘坐火车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.44014098716864036
+      },
+      "min_score": 0.44014098716864036,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 21,
+      "question": "开车前20天退票收手续费吗？",
+      "answer": "开车前20天退票不收退票费。",
+      "ground_truth": "开车前15天（不含）以上退票的，不收取退票费。开车前48小时以上的按票价5%收费，24小时以上、不足48小时的按票价10%收费，不足24小时的按票价20%收费。开车后未改签的车票不能退票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 0.5,
+        "context_precision": 0.9999999999,
+        "context_recall": 0.6666666666666666,
+        "answer_relevancy": 0.44950701047181485
+      },
+      "min_score": 0.44950701047181485,
+      "failed_metrics": [
+        "nv_context_relevance",
+        "context_recall",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 14,
+      "question": "动车上行李箱尺寸有什么限制？",
+      "answer": "动车组行李箱长宽高之和不超过130cm，单重不超过20kg。",
+      "ground_truth": "每位旅客可免费携带物品：儿童10千克、普通旅客20千克、外交人员35千克。每件物品外部尺寸长、宽、高之和不超过160厘米（动车组列车130厘米），杆状物品不超过200厘米，重量不超过20千克。危险品、违禁品严禁携带。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.45696442979219626
+      },
+      "min_score": 0.45696442979219626,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 11,
+      "question": "导盲犬可以带上火车吗？有什么要求？",
+      "answer": "导盲犬可以带上火车，需佩戴导盲犬标识和防止伤人的装具，由持有残疾人证的旅客本人牵领，并出示残疾人证、导盲犬工作证和动物健康免疫证明。",
+      "ground_truth": "旅客不得携带任何动物乘车（导盲犬除外）。导盲犬应佩戴导盲犬标识和防止伤人的装具，由持有残疾人证的旅客本人牵领。其他小型活体动物可通过铁路托运服务运输。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4581870847456218
+      },
+      "min_score": 0.4581870847456218,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 3,
+      "question": "改签火车票有什么限制？",
+      "answer": "一张车票只能改签一次。开车前48小时以上可改签预售期内其他列车，开车前48小时以内可改签开车前或当日其他列车。开车后的车票可在当日24时前改签当日其他列车，但只能在票面发站办理。",
+      "ground_truth": "一张车票只能改签一次。开车前48小时以上可改签预售期内其他列车，开车前48小时以内可改签开车前或当日其他列车。开车后的车票可在当日24时前改签当日其他列车，但只能在票面发站办理。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.46077597526985314
+      },
+      "min_score": 0.46077597526985314,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 19,
+      "question": "在动车卫生间里抽烟会怎样？",
+      "answer": "在动车卫生间吸烟将触发烟雾报警导致列车降速或停车，违反者将被处以500元以上2000元以下罚款，并纳入铁路征信系统，180天内限制购票乘坐火车。",
+      "ground_truth": "所有动车组列车（含复兴号和和谐号）全列禁烟，包括车厢连接处、卫生间等所有区域。在动车组上吸烟将触发烟雾报警导致列车降速或停车，违反者将被处以500元以上2000元以下罚款，并纳入铁路征信系统，180天内限制购票乘坐火车。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4624987933618143
+      },
+      "min_score": 0.4624987933618143,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 23,
+      "question": "技校的学生可以买学生票吗？",
+      "answer": "技校学生可购学生优惠票，需凭学生证和优惠卡，家庭与学校异地。",
+      "ground_truth": "在普通大、专院校（含民办、军事院校）及中等专业学校、技工学校就读的学生凭注明乘车区间的学生证可购买学生票，享受硬座半价或动车组二等座7.5折优惠。每学年可购买4次。学生需持学生证在车站人工窗口或自助核验机上完成资质核验后方可购票。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4625354515776888
+      },
+      "min_score": 0.4625354515776888,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 10,
+      "question": "小孩身高1.3米需要买票吗？",
+      "answer": "身高1.3米的儿童应购买儿童票。",
+      "ground_truth": "每一名持票成年人旅客可免费携带一名身高不足1.2米的儿童。身高1.2米至1.5米的儿童应购买儿童票，超过1.5米的儿童应购买全价票。免费乘车的儿童单独使用卧铺时，应另收全价卧铺票价。儿童票可凭户口簿等有效身份证件购买。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.4789349510268984
+      },
+      "min_score": 0.4789349510268984,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 4,
+      "question": "可以带多少行李上高铁？",
+      "answer": "每位旅客可免费携带物品20千克，每件外部尺寸长宽高之和不超过160厘米，杆状物品不超过200厘米，重量不超过20千克。",
+      "ground_truth": "每位旅客可免费携带物品：儿童10千克、普通旅客20千克、外交人员35千克。每件物品外部尺寸长、宽、高之和不超过160厘米（动车组列车130厘米），杆状物品不超过200厘米，重量不超过20千克。危险品、违禁品严禁携带。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.48468841418619607
+      },
+      "min_score": 0.48468841418619607,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 0,
+      "question": "儿童票怎么购买？需要什么证件？",
+      "answer": "6-14周岁购儿童优惠票，≥14周岁购全价票。免费儿童需申明并持申明证件乘车，儿童票与成人票日期、车次、席别一致。",
+      "ground_truth": "每一名持票成年人旅客可免费携带一名身高不足1.2米的儿童。身高1.2米至1.5米的儿童应购买儿童票，超过1.5米的儿童应购买全价票。免费乘车的儿童单独使用卧铺时，应另收全价卧铺票价。儿童票可凭户口簿等有效身份证件购买。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.49999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.49146848870021614
+      },
+      "min_score": 0.49146848870021614,
+      "failed_metrics": [
+        "context_precision",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 18,
+      "question": "不取纸质票可以直接刷身份证进站吗？",
+      "answer": "车票实行实名制管理，旅客可凭购票证件直接进站乘车，无需取纸质票。",
+      "ground_truth": "购买电子客票后，旅客持购票时使用的居民身份证等有效身份证件原件，即可通过自助闸机完成实名制验证和进出站检票。无需取纸质车票，刷身份证或手机二维码即可进站。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 0.6666666666666666,
+        "nv_context_relevance": 0.5,
+        "context_precision": 0.9999999999,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.5001997761303155
+      },
+      "min_score": 0.5,
+      "failed_metrics": [
+        "faithfulness",
+        "nv_context_relevance",
+        "answer_relevancy"
+      ]
+    },
+    {
+      "index": 1,
+      "question": "高铁上可以带宠物吗？",
+      "answer": "宠物（如猫、狗）不可以带入高铁车厢，必须办理托运。",
+      "ground_truth": "旅客不得携带任何动物乘车（导盲犬除外）。导盲犬应佩戴导盲犬标识和防止伤人的装具，由持有残疾人证的旅客本人牵领。其他小型活体动物可通过铁路托运服务运输。",
+      "contexts_count": 2,
+      "scores": {
+        "faithfulness": 1.0,
+        "nv_context_relevance": 1.0,
+        "context_precision": 0.99999999995,
+        "context_recall": 1.0,
+        "answer_relevancy": 0.5281548239705982
+      },
+      "min_score": 0.5281548239705982,
+      "failed_metrics": [
+        "answer_relevancy"
+      ]
+    }
+  ]
+}
