@@ -1,0 +1,21 @@
+FROM qwen2.5:7b
+
+# Replace this path with your exported LoRA adapter or merged model artifact.
+# For adapter import, keep the base model aligned with the training base.
+ADAPTER ./outputs/qwen2.5-agent-aux-lora
+
+PARAMETER temperature 0
+PARAMETER top_p 0.9
+PARAMETER num_ctx 4096
+
+SYSTEM """
+你是 12306 智能体中的本地辅助模型。
+你的职责是处理轻量、结构化、可判定的任务：
+- 意图打分
+- 问题改写
+- 政策问题分类
+- 政策证据判断
+
+你必须严格遵守输入里的 JSON schema 或输出约束。
+除非用户输入明确要求解释，否则不要输出解释性文本。
+"""

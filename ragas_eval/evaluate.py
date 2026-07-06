@@ -22,7 +22,8 @@ from ragas.metrics import (
 )
 import asyncio
 
-RAG_API_URL = os.environ.get("RAG_API_URL", "http://localhost:8899/rag/eval/ask")
+RAG_TARGET = os.environ.get("RAG_TARGET", "java_rag")
+RAG_API_URL = os.environ.get("RAG_API_URL", "")
 RAG_USERNAME = os.environ.get("RAG_USERNAME", "eval-user")
 RAG_SESSION_ID = os.environ.get("RAG_SESSION_ID", "eval-session")
 RAG_EVAL_PROFILE = os.environ.get("RAG_EVAL_PROFILE", "strict-v2")
@@ -46,6 +47,14 @@ THRESHOLD_RELEVANCE = 0.80
 THRESHOLD_CONTEXT_PRECISION = 0.70
 THRESHOLD_CONTEXT_RECALL = 0.70
 THRESHOLD_ANSWER_RELEVANCY = 0.80
+
+
+def resolve_rag_api_url():
+    if RAG_API_URL:
+        return RAG_API_URL
+    if RAG_TARGET == "python_agent":
+        return "http://localhost:8898/eval/ask"
+    return "http://localhost:8899/rag/eval/ask"
 
 
 def load_golden_dataset():
@@ -200,34 +209,27 @@ class RateLimitedOpenAIEmbeddings(OpenAIEmbeddings):
 
 
 def query_rag_system(question: str):
+    api_url = resolve_rag_api_url()
     retry_count = 0
     last_error = ""
     for attempt in range(1, MAX_REQUEST_RETRIES + 1):
         try:
+            params = {
+                "q": question,
+                "sessionId": RAG_SESSION_ID,
+                "username": RAG_USERNAME,
+            }
+            if RAG_TARGET == "java_rag":
+                params["profile"] = RAG_EVAL_PROFILE
+                params["token"] = RAG_TOKEN
             resp = requests.get(
-                RAG_API_URL,
-                params={
-                    "q": question,
-                    "sessionId": RAG_SESSION_ID,
-                    "username": RAG_USERNAME,
-                    "profile": RAG_EVAL_PROFILE,
-                    "token": RAG_TOKEN,
-                },
+                api_url,
+                params=params,
                 timeout=REQUEST_TIMEOUT_SECONDS,
             )
             resp.raise_for_status()
             payload = resp.json()
-            result_text = ""
-            retrieved_contexts = []
-            if isinstance(payload, dict) and payload.get("code") == 200:
-                data = payload.get("data")
-                if isinstance(data, dict):
-                    result_text = str(data.get("answer", ""))
-                    retrieved_contexts = data.get("contexts", [])
-                else:
-                    result_text = "" if data is None else str(data)
-            else:
-                result_text = json.dumps(payload, ensure_ascii=False)
+            result_text, retrieved_contexts = extract_eval_payload(payload)
             
             if is_rate_limit_error(result_text):
                 time.sleep(30) # 遇到限流多等一会儿，避免连续 429
@@ -247,6 +249,35 @@ def query_rag_system(question: str):
             return "[请求失败，无回答]", [], retry_count, last_error
     print(f"  [Error] Failed to get RAG response after {MAX_REQUEST_RETRIES} attempts.")
     return "[请求失败，无回答]", [], retry_count, last_error
+
+
+def extract_eval_payload(payload):
+    if isinstance(payload, dict) and payload.get("code") == 200:
+        data = payload.get("data")
+        if isinstance(data, dict):
+            return str(data.get("answer", "")), normalize_contexts(data.get("contexts"))
+        return ("" if data is None else str(data)), []
+
+    if isinstance(payload, dict):
+        answer = payload.get("answer")
+        contexts = payload.get("contexts")
+        if answer is not None:
+            return str(answer), normalize_contexts(contexts)
+
+    return json.dumps(payload, ensure_ascii=False), []
+
+
+def normalize_contexts(contexts):
+    if not isinstance(contexts, list):
+        return []
+    normalized = []
+    for item in contexts:
+        if item is None:
+            continue
+        text = str(item).strip()
+        if text:
+            normalized.append(text)
+    return normalized
 
 
 def build_eval_dataset(items, answers, retrieved_contexts_list):
@@ -292,6 +323,8 @@ def run_evaluation():
     if EVAL_LIMIT > 0:
         dataset = dataset[:EVAL_LIMIT]
     print(f"\nLoaded golden dataset, {len(dataset)} test questions\n")
+    print(f"RAG target: {RAG_TARGET}")
+    print(f"RAG API URL: {resolve_rag_api_url()}")
     print(f"RAG endpoint profile: {RAG_EVAL_PROFILE}")
     print(f"Report path: {REPORT_PATH}")
 
@@ -389,7 +422,8 @@ def run_evaluation():
         failure_report = {
             "status": "failed",
             "timestamp": now_ts(),
-            "rag_api_url": RAG_API_URL,
+            "rag_target": RAG_TARGET,
+            "rag_api_url": resolve_rag_api_url(),
             "rag_eval_profile": RAG_EVAL_PROFILE,
             "judge_model": JUDGE_MODEL,
             "dataset_size": len(dataset),
@@ -415,7 +449,8 @@ def run_evaluation():
     report = {
         "status": "success",
         "timestamp": now_ts(),
-        "rag_api_url": RAG_API_URL,
+        "rag_target": RAG_TARGET,
+        "rag_api_url": resolve_rag_api_url(),
         "rag_eval_profile": RAG_EVAL_PROFILE,
         "judge_model": JUDGE_MODEL,
         "dataset_size": len(dataset),
@@ -443,7 +478,8 @@ def run_evaluation():
     write_json(DETAIL_REPORT_PATH, {
         "status": "success",
         "timestamp": now_ts(),
-        "rag_api_url": RAG_API_URL,
+        "rag_target": RAG_TARGET,
+        "rag_api_url": resolve_rag_api_url(),
         "rag_eval_profile": RAG_EVAL_PROFILE,
         "judge_model": JUDGE_MODEL,
         "dataset_size": len(dataset),

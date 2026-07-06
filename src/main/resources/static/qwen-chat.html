@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen 本地聊天</title>
+    <style>
+        body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f3f6fb; color: #0f172a; }
+        .page { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .title { font-size: 28px; font-weight: 700; color: #1d4ed8; }
+        .sub { font-size: 14px; color: #64748b; margin-top: 6px; }
+        .status { font-size: 13px; color: #64748b; background: #e2e8f0; padding: 8px 12px; border-radius: 999px; }
+        .shell { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 18px; display: grid; grid-template-rows: auto 1fr auto; min-height: 78vh; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .toolbar-left { display: flex; flex-direction: column; gap: 6px; }
+        .toolbar-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn { border: none; border-radius: 8px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
+        .btn.primary { background: #2563eb; color: white; }
+        .btn.primary:hover { background: #1d4ed8; }
+        .btn.secondary { background: #e2e8f0; color: #334155; }
+        .btn.secondary:hover { background: #cbd5e1; }
+        .btn.secondary:disabled, .btn.primary:disabled { opacity: 0.65; cursor: not-allowed; }
+        select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 12px; font-size: 14px; background: white; color: #0f172a; }
+        .chat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+        .row { display: flex; }
+        .row.user { justify-content: flex-end; }
+        .row.ai { justify-content: flex-start; }
+        .bubble { max-width: min(80%, 760px); padding: 12px 14px; border-radius: 10px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+        .bubble.user { background: #2563eb; color: white; border-bottom-right-radius: 2px; }
+        .bubble.ai { background: white; color: #0f172a; border: 1px solid #dbeafe; border-bottom-left-radius: 2px; }
+        .composer { margin-top: 14px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+        textarea { width: 100%; min-height: 64px; max-height: 200px; resize: vertical; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; font: inherit; }
+        .hint { font-size: 12px; color: #94a3b8; }
+        @media (max-width: 768px) {
+            .page { padding: 14px; }
+            .toolbar { flex-direction: column; align-items: flex-start; }
+            .composer { grid-template-columns: 1fr; }
+            .bubble { max-width: 92%; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header">
+        <div>
+            <div class="title">Qwen 本地聊天</div>
+            <div class="sub">直接连接你本地部署的 Ollama `qwen2.5:7b`，纯聊天，不走票务 Agent 编排。</div>
+        </div>
+        <div class="status" id="status">检查连接中</div>
+    </div>
+
+    <div class="shell">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <strong>本地模型对话</strong>
+                <span class="hint">Shift + Enter 换行，Enter 发送</span>
+            </div>
+            <div class="toolbar-right">
+                <select id="modelSelect" aria-label="选择模型"></select>
+                <button class="btn secondary" id="switchBtn" type="button" onclick="switchModel()">切换模型</button>
+                <button class="btn secondary" id="reloadBtn" type="button" onclick="reloadModel()">重载模型</button>
+                <button class="btn secondary" type="button" onclick="clearChat()">清空聊天</button>
+            </div>
+        </div>
+
+        <div class="chat" id="chatArea">
+            <div class="row ai">
+                <div class="bubble ai">你好，我是你本地部署的 Qwen 7B。你现在可以直接和我聊天。</div>
+            </div>
+        </div>
+
+        <div class="composer">
+            <textarea id="messageInput" placeholder="输入你想和 Qwen 说的话"></textarea>
+            <button class="btn primary" id="sendBtn" type="button" onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const OLLAMA_CHAT_BASE_URL = 'http://127.0.0.1:8898';
+    let currentSource = null;
+    let renderTimer = null;
+    let currentModel = 'qwen2.5:7b';
+
+    function setStatus(text, tone = 'idle') {
+        const node = document.getElementById('status');
+        node.innerText = text;
+        node.style.color = tone === 'ok' ? '#059669' : tone === 'busy' ? '#d97706' : tone === 'error' ? '#dc2626' : '#64748b';
+        node.style.background = tone === 'ok' ? '#dcfce7' : tone === 'busy' ? '#fef3c7' : tone === 'error' ? '#fee2e2' : '#e2e8f0';
+    }
+
+    function appendBubble(role, text) {
+        const chatArea = document.getElementById('chatArea');
+        const row = document.createElement('div');
+        row.className = `row ${role}`;
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role}`;
+        bubble.innerText = text;
+        row.appendChild(bubble);
+        chatArea.appendChild(row);
+        chatArea.scrollTop = chatArea.scrollHeight;
+        return bubble;
+    }
+
+    function syncModelOptions(models, activeModel) {
+        const select = document.getElementById('modelSelect');
+        const uniqueModels = Array.from(new Set((models || []).filter(Boolean)));
+        select.innerHTML = '';
+        uniqueModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.innerText = model;
+            option.selected = model === activeModel;
+            select.appendChild(option);
+        });
+        if (!uniqueModels.includes(activeModel) && activeModel) {
+            const option = document.createElement('option');
+            option.value = activeModel;
+            option.innerText = activeModel;
+            option.selected = true;
+            select.appendChild(option);
+        }
+        currentModel = activeModel || currentModel;
+    }
+
+    function clearChat() {
+        if (currentSource) {
+            currentSource.close();
+            currentSource = null;
+        }
+        document.getElementById('chatArea').innerHTML = `
+            <div class="row ai">
+                <div class="bubble ai">聊天已清空。你可以继续直接和本地 ${currentModel} 对话。</div>
+            </div>
+        `;
+        setStatus('已重置', 'idle');
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const reloadBtn = document.getElementById('reloadBtn');
+        const switchBtn = document.getElementById('switchBtn');
+        const modelSelect = document.getElementById('modelSelect');
+        const message = input.value.trim();
+        if (!message) return;
+
+        appendBubble('user', message);
+        input.value = '';
+        sendBtn.disabled = true;
+        reloadBtn.disabled = true;
+        switchBtn.disabled = true;
+        modelSelect.disabled = true;
+        sendBtn.innerText = '生成中...';
+        setStatus(`本地模型生成中：${currentModel}`, 'busy');
+
+        const aiBubble = appendBubble('ai', '...');
+        let responseText = '';
+        let pendingBuffer = '';
+
+        function flushBuffer() {
+            if (!pendingBuffer) return;
+            responseText += pendingBuffer;
+            pendingBuffer = '';
+            aiBubble.innerText = responseText;
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function scheduleFlush() {
+            if (renderTimer) return;
+            renderTimer = setTimeout(() => {
+                renderTimer = null;
+                flushBuffer();
+            }, 60);
+        }
+
+        try {
+            if (currentSource) {
+                currentSource.close();
+            }
+            const url = `${OLLAMA_CHAT_BASE_URL}/ollama/chat/stream?message=${encodeURIComponent(message)}`;
+            currentSource = new EventSource(url);
+
+            currentSource.addEventListener('meta', function(event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    currentModel = payload.model || currentModel;
+                    setStatus(`已连接 ${payload.model}`, 'ok');
+                } catch (err) {
+                    setStatus('本地模型在线', 'ok');
+                }
+            });
+
+            currentSource.addEventListener('message', function(event) {
+                pendingBuffer += event.data.replace(/\\n/g, '\n');
+                if (
+                    pendingBuffer.length >= 24 ||
+                    /[。！？；，\n]$/.test(pendingBuffer)
+                ) {
+                    flushBuffer();
+                    return;
+                }
+                scheduleFlush();
+            });
+
+            currentSource.addEventListener('done', function() {
+                if (renderTimer) {
+                    clearTimeout(renderTimer);
+                    renderTimer = null;
+                }
+                flushBuffer();
+                currentSource.close();
+                currentSource = null;
+                sendBtn.disabled = false;
+                reloadBtn.disabled = false;
+                switchBtn.disabled = false;
+                modelSelect.disabled = false;
+                sendBtn.innerText = '发送';
+                setStatus('本地模型已完成', 'ok');
+            });
+
+            currentSource.onerror = async function() {
+                if (currentSource) {
+                    currentSource.close();
+                    currentSource = null;
+                }
+                if (renderTimer) {
+                    clearTimeout(renderTimer);
+                    renderTimer = null;
+                }
+                try {
+                    const resp = await fetch(`${OLLAMA_CHAT_BASE_URL}/ollama/chat?message=${encodeURIComponent(message)}`);
+                    const data = await resp.json();
+                    aiBubble.innerText = data.answer || '本地模型当前没有返回结果。';
+                    currentModel = data.model || currentModel;
+                    setStatus(`已连接 ${data.model || '本地模型'}`, 'ok');
+                } catch (err) {
+                    aiBubble.innerText = '本地模型当前不可用，请稍后重试。';
+                    setStatus('本地模型不可用', 'error');
+                } finally {
+                    sendBtn.disabled = false;
+                    reloadBtn.disabled = false;
+                    switchBtn.disabled = false;
+                    modelSelect.disabled = false;
+                    sendBtn.innerText = '发送';
+                }
+            };
+        } catch (err) {
+            aiBubble.innerText = '发送失败，请稍后重试。';
+            sendBtn.disabled = false;
+            reloadBtn.disabled = false;
+            switchBtn.disabled = false;
+            modelSelect.disabled = false;
+            sendBtn.innerText = '发送';
+            setStatus('请求失败', 'error');
+        }
+    }
+
+    async function reloadModel() {
+        const reloadBtn = document.getElementById('reloadBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const switchBtn = document.getElementById('switchBtn');
+        const modelSelect = document.getElementById('modelSelect');
+        reloadBtn.disabled = true;
+        sendBtn.disabled = true;
+        switchBtn.disabled = true;
+        modelSelect.disabled = true;
+        const prevText = reloadBtn.innerText;
+        reloadBtn.innerText = '重载中...';
+        setStatus('正在重载本地模型', 'busy');
+        try {
+            const resp = await fetch(`${OLLAMA_CHAT_BASE_URL}/ollama/reload`, {
+                method: 'POST'
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                appendBubble('ai', `本地模型 ${data.model} 已重载完成，可以继续对话。`);
+                setStatus(`模型已重载：${data.model}`, 'ok');
+            } else {
+                appendBubble('ai', `本地模型重载未完全成功，请稍后再试。`);
+                setStatus('模型重载失败', 'error');
+            }
+        } catch (err) {
+            appendBubble('ai', '本地模型重载失败，请检查服务状态。');
+            setStatus('模型重载失败', 'error');
+        } finally {
+            reloadBtn.disabled = false;
+            sendBtn.disabled = false;
+            switchBtn.disabled = false;
+            modelSelect.disabled = false;
+            reloadBtn.innerText = prevText;
+        }
+    }
+
+    async function switchModel() {
+        const modelSelect = document.getElementById('modelSelect');
+        const switchBtn = document.getElementById('switchBtn');
+        const reloadBtn = document.getElementById('reloadBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const targetModel = modelSelect.value;
+        if (!targetModel || targetModel === currentModel) {
+            setStatus(`当前模型已是 ${currentModel}`, 'idle');
+            return;
+        }
+
+        switchBtn.disabled = true;
+        reloadBtn.disabled = true;
+        sendBtn.disabled = true;
+        modelSelect.disabled = true;
+        const prevText = switchBtn.innerText;
+        switchBtn.innerText = '切换中...';
+        setStatus(`正在切换到 ${targetModel}`, 'busy');
+        try {
+            const resp = await fetch(`${OLLAMA_CHAT_BASE_URL}/ollama/model`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: targetModel })
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                currentModel = data.model;
+                syncModelOptions(data.available_models || [data.model], data.model);
+                appendBubble('ai', `本地模型已切换到 ${data.model}，可以继续对话。`);
+                setStatus(`当前模型：${data.model}`, 'ok');
+            } else {
+                syncModelOptions(data.available_models || [currentModel], data.model || currentModel);
+                appendBubble('ai', `模型切换失败：${targetModel} 不可用。`);
+                setStatus('模型切换失败', 'error');
+            }
+        } catch (err) {
+            appendBubble('ai', '模型切换失败，请检查 Python Agent 或 Ollama 状态。');
+            setStatus('模型切换失败', 'error');
+        } finally {
+            switchBtn.disabled = false;
+            reloadBtn.disabled = false;
+            sendBtn.disabled = false;
+            modelSelect.disabled = false;
+            switchBtn.innerText = prevText;
+        }
+    }
+
+    document.getElementById('messageInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    (async function checkHealth() {
+        try {
+            const resp = await fetch(`${OLLAMA_CHAT_BASE_URL}/debug/runtime`);
+            const data = await resp.json();
+            if (data.ollama_enabled) {
+                syncModelOptions(data.ollama_available_models || [data.ollama_aux_model], data.ollama_aux_model);
+                setStatus(`本地模型已就绪：${data.ollama_aux_model}`, 'ok');
+            } else {
+                setStatus('本地模型未启用', 'error');
+            }
+        } catch (err) {
+            setStatus('Python Agent 未连接', 'error');
+        }
+    })();
+</script>
+</body>
+</html>

@@ -4,16 +4,18 @@
 \usepackage{enumitem}
 \usepackage{linespacing_fix}
 \usepackage{cite}
+\usepackage[hidelinks]{hyperref}
 
 \begin{document}
 \pagenumbering{gobble}
 
 \noindent
 \name{李昱辰}
-\otherInfo{27 届}{意向岗位：Java 后端开发实习 / Agent 开发实习}{}{}
-\otherInfo{可尽快到岗 \textperiodcentered\ 每周可实习 5 天 \textperiodcentered\ 可连续实习 6 个月}{邮箱：edllyc041202@gmail.com}{}{}
+\otherInfo{27 届}{意向岗位：Python Agent / LLM 应用开发实习}{}{}
+\otherInfo{可尽快到岗}{每周可实习 5 天}{可连续实习 6 个月}{}
+\otherInfo{邮箱：edllyc041202@gmail.com}{GitHub：\href{https://github.com/EDLlyc/12306-ticket-service}{EDLlyc/12306-ticket-service}}{}{}
 
-\vspace{-0.8em}
+\vspace{-1.0em}
 
 \section{教育背景}
 \datedsubsection{\textbf{安徽大学} - 数字媒体技术专业 - 本科}{2023.09 - 2027.06}
@@ -25,35 +27,36 @@
 
 \section{专业技能}
 \begin{itemize}[parsep=0.5ex]
+    \item \textbf{Python Agent / FastAPI / AsyncIO / HTTPX}：具备 Python 智能体服务开发经验，熟悉 FastAPI 接口设计、异步 I/O、HTTP 工具调用、SSE 流式输出与工程化测试。
+    \item \textbf{LangGraph / Tool Calling / MCP / RAG / DeepEval}：熟悉 LangGraph 状态图、多意图路由、Tool Calling、MCP 外部工具接入、Plan-and-Execute/Replan、Milvus/OpenSearch 混合检索、RRF/Reranker 与 DeepEval/RAGAS 离线评测。
     \item \textbf{Java / JVM / 并发}：掌握 Java 核心基础，熟悉集合、并发编程与 JVM 内存模型，具备基于 CompletableFuture 的异步编排与高并发链路设计经验。
     \item \textbf{Spring Boot / MyBatis-Plus / MySQL}：熟练使用 Spring Boot、MyBatis-Plus、MySQL 进行后端服务开发，具备索引优化、事务隔离、SQL 调优与业务链路落库实践经验。
-    \item \textbf{Redis / Redisson / Lua / RocketMQ / Sentinel / Docker / Maven / Git}：掌握 Redis/Redisson/Lua 缓存与并发控制方案，具备多级缓存、分布式锁、库存原子扣减、MQ 事务消息/延迟消息、限流熔断治理经验；熟悉 Docker 基础容器化部署以及 Maven、Git 日常工程协作。
-    \item \textbf{LangChain4j / WebFlux / Reactor / RAG / Ollama / RAGAS / LLM-as-a-Judge}：具备 LangChain4j + Spring WebFlux + Project Reactor 智能体应用开发经验，掌握 AiServices 驱动的实体提取、查询改写、意图路由与复杂度判定；熟悉 Plan-and-Execute、Parent-Child、Milvus/OpenSearch 混合检索、RRF、BM25+、Reranker、Planned RAG，并可基于 Ollama、RAGAS、LLM-as-a-Judge 完成本地辅助判定与离线评测。
+    \item \textbf{Redis / Redisson / Lua / RocketMQ / Sentinel / Docker / Git}：掌握 Redis/Redisson/Lua 缓存与并发控制方案，具备多级缓存、分布式锁、库存原子扣减、MQ 事务消息/延迟消息、限流熔断治理经验。
 \end{itemize}
 
 \section{项目经历}
 
-\datedsubsection{\textbf{12306 高并发售票核心网关}（后端架构开发）}{2026.01 - 2026.05}
+\datedsubsection{\textbf{12306 智能数字员工}（Python Agent / RAG 智能体研发）}{2026.03 - 2026.06}
+\textbf{项目技术}：Python, FastAPI, LangGraph, LangChain, MCP, Redis, Milvus, OpenSearch, 智谱 GLM, DeepEval, RAGAS\\
+\textbf{项目描述}：面向 12306 规章问答与购退改查场景，将智能体编排层重构为 Python 服务；Java 票务系统作为高并发交易工具内核，由 Python Agent 负责意图识别、规划执行、RAG 检索、记忆管理与流式交互。\\
+\textbf{项目职责}：
+\begin{enumerate}[parsep=0.5ex]
+    \item \textbf{LangGraph 编排与路由}：基于 LangGraph 构建状态图主链路，统一编排语义缓存、Query Rewrite、意图路由、上下文桥接、动作规划、工具执行与最终响应；设计 ACTION / TICKET / RAG / CHITCHAT 多专家意图打分，结合最高分、分差与置信度阈值完成分层路由决策。
+    \item \textbf{Tool Calling 与 MCP 扩展}：设计标准 Tool Schema，将查票、路线查询、订票、订单查询、退票等能力封装为工具；接入外部天气 MCP 工具，支持 Agent 联动查询车次与出发/到达城市天气，生成“车次可用性 + 出行风险提醒”的多工具综合建议。
+    \item \textbf{Plan-and-Execute 与安全执行}：针对购票、退票等高风险动作请求引入 Plan-and-Execute、显式确认态、执行失败兜底、Replan 与副作用工具去重机制，避免误触发和重复订票/退票，并在 trace 中记录规划、确认、执行与重规划结果。
+    \item \textbf{文档入库与混合检索}：实现 PDF/DOCX/Markdown/TXT 规章文档解析、条款级切分、hash 去重与入库状态追踪，支持写入 OpenSearch BM25 与 Milvus 向量索引；结合 RRF、Reranker、Planned RAG、Redis 语义缓存与长短期记忆优化复杂政策问答。
+    \item \textbf{Agent Eval 与质量评估}：构建 Agent golden cases，核心用例全量通过，覆盖工具选择、参数正确性、MCP trace、副作用安全与坏 case 回归；接入 DeepEval G-Eval + 智谱 judge 评估回答质量，RAGAS 历史结果达到 context precision 0.881、context recall 0.935。
+\end{enumerate}
+
+\datedsubsection{\textbf{12306 高并发售票核心网关}（交易内核/后端开发）}{2026.03 - 2026.06}
 \textbf{项目技术}：Spring Boot, Redis, Redisson, Caffeine, RBloomFilter, RocketMQ, Sentinel, MyBatis-Plus\\
-\textbf{项目描述}：面向 12306 高并发售票场景，围绕查票、订票、退款等核心链路完成缓存治理、库存预扣、事务一致性与补偿闭环设计。\\
+\textbf{项目描述}：作为 Python Agent 的票务交易工具内核，面向 12306 高并发售票场景，围绕查票、订票、退款等核心链路完成缓存治理、库存预扣、事务一致性与补偿闭环设计。\\
 \textbf{项目职责}：
 \begin{enumerate}[parsep=0.5ex]
     \item \textbf{缓存与高并发治理}：基于 Caffeine + Redis + RBloomFilter 构建多级缓存，结合 Redisson 分布式锁与基于 CompletableFuture 的 singleflight 回源合并治理热点 Key；在查票热路径压测中，800 并发下达 5409.54 QPS、0\% HTTP 错误率，P95 344ms。
     \item \textbf{库存扣减与分桶模型}：基于 Redis Lua 实现库存原子预扣减，设计 Segmented Stock 分桶库存模型分散热点流量，降低高并发订票场景下的库存争抢与超卖风险。
-    \item \textbf{订单异步化与事务消息}：通过 RocketMQ 事务消息 + TransactionListener 串联 Redis 预扣、订单落库与 MySQL 扣减，构建异步削峰与最终一致性链路；在 200 用户订票压测中，达 510.94 TPS、0\% 错误率，P95 318ms，未观察到超卖且异步收敛后一致性校验通过。
-    \item \textbf{退款补偿与稳定性保护}：围绕退款链路设计 refund 字段与 Redis Lua 幂等回补机制，解决 MQ 重试导致的重复补库存问题；基于 RocketMQ 延迟消息实现超时未支付订单自动关单，并结合 Sentinel 完成限流与热点保护。
-\end{enumerate}
-
-\datedsubsection{\textbf{12306 智能数字员工}（Reactive Multi-Agent / RAG 智能体研发）}{2026.01 - 2026.05}
-\textbf{项目技术}：Spring WebFlux, Project Reactor, LangChain4j, Milvus, OpenSearch, 智谱 GLM, Ollama, RAGAS\\
-\textbf{项目描述}：面向 12306 规章问答与购退改查场景，构建响应式多智能体与 RAG 执行链路，覆盖意图路由、规划执行、混合检索、记忆管理与流式反馈。\\
-\textbf{项目职责}：
-\begin{enumerate}[parsep=0.5ex]
-    \item \textbf{多专家意图路由}：设计多专家意图打分机制，对 ACTION / TICKET / RAG / CHITCHAT 四类意图并行评分，结合最高分、分差与置信度完成分层路由决策，降低动作请求、票务查询与政策问答之间的误路由。
-    \item \textbf{政策路由与语义桥接}：基于 AiServices 构建上下文依赖判定、政策分类与政策证据判定链路，结合 Session 前缀隔离、ConversationBridge 与本地部署的 Ollama 轻模型辅助判定，提升追问承接与跨专家切换时的语义连续性。
-    \item \textbf{Plan-and-Execute 执行链路}：将传统 ReAct 升级为 Plan-and-Execute，由 Planner 输出 JSON 计划拆解复杂购退票请求，Executor 调用票务工具并消费 ToolObservation 结构化观测结果，结合 Replan 机制处理执行异常。
-    \item \textbf{混合检索与 Planned RAG}：采用 Parent-Child 切片与 Milvus Dense + OpenSearch BM25 双路召回，结合 RRF 融合、BM25+ 打分与 Reranker 精排优化复杂政策问答命中质量，并对复杂问题引入子问题拆解实现 Planned RAG。
-    \item \textbf{评测、流式交互与记忆}：基于评测集执行 RAGAS 评测，结果达到 context precision 0.881、context recall 0.935；同时基于 WebFlux + Project Reactor + Sinks.Many 实现流式输出，并接入 Redis 分布式语义缓存与短期滑动窗口 + 长期摘要压缩双层记忆。
+    \item \textbf{订单状态机与事务一致性}：设计待支付、已支付、已取消、退款中、已退款等订单状态流转，结合状态条件更新与业务幂等号处理支付回调、超时关单、MQ 重试和重复退票；通过 RocketMQ 事务消息串联 Redis 预扣、订单落库与 MySQL 扣减，在 200 用户订票压测中达 510.94 TPS、0\% 错误率，未观察到超卖。
+    \item \textbf{退款补偿与稳定性保护}：设计 refund 字段与 Redis Lua 幂等回补机制，解决 MQ 重试导致的重复补库存问题；基于 RocketMQ 延迟消息实现超时关单，并结合 Sentinel 完成限流与热点保护，为 Agent 高风险工具调用提供可靠后端边界。
 \end{enumerate}
 
 \end{document}

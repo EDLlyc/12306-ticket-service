@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+load_local_env_file() {
+  local env_file="${1:-.env}"
+  if [[ ! -f "$env_file" ]]; then
+    return 0
+  fi
+
+  set -a
+  # shellcheck disable=SC1090
+  source "$env_file"
+  set +a
+}
+
 resolve_docker_mode() {
   local requested="${DEV_DOCKER_MODE:-auto}"
   if [[ "$requested" == "desktop" || "$requested" == "native" ]]; then
@@ -23,6 +35,8 @@ resolve_windows_host_ip() {
 }
 
 configure_dev_env() {
+  load_local_env_file "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.env"
+
   export DEV_DOCKER_MODE_RESOLVED
   DEV_DOCKER_MODE_RESOLVED="$(resolve_docker_mode)"
 

@@ -33,10 +33,23 @@ build/
 .vscode/
 
 ### Custom Exclusions ###
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.cache/
+.deepeval/
 *.log
 *.jtl
 *.patch
 *.diff
+=*
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.xdv
 result.jtl
 volumes/
 logs/
@@ -58,8 +71,5 @@ crawl-output
 ~
 html-report*
 load-test-runs
-
-
-
 
 

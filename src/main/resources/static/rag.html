@@ -32,12 +32,24 @@
         .result-box { margin-top: 15px; padding: 15px; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;}
         .loading { color: #6b7280; font-style: italic; display: none; margin-top: 10px;}
         
-        .chat-area { height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 15px; border-radius: 5px; margin-bottom: 15px; background: #fafafa;}
-        .msg { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 85%; width: fit-content; line-height: 1.5;}
-        .msg.user { background: #eff6ff; color: #1e40af; margin-left: auto; border-bottom-right-radius: 0;}
-        .msg.ai { background: white; border: 1px solid #e5e7eb; border-bottom-left-radius: 0; white-space: pre-wrap;}
+        .chat-shell { display: grid; grid-template-rows: auto 1fr auto; min-height: 620px; }
+        .chat-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .chat-status { font-size: 13px; color: #64748b; }
+        .chat-area { height: 460px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 18px; border-radius: 8px; margin-bottom: 15px; background: #f8fafc; display: flex; flex-direction: column; gap: 12px; }
+        .msg-row { display: flex; }
+        .msg-row.user { justify-content: flex-end; }
+        .msg-row.ai { justify-content: flex-start; }
+        .msg { padding: 12px 14px; border-radius: 8px; max-width: min(85%, 720px); width: fit-content; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .msg.user { background: #2563eb; color: white; border-bottom-right-radius: 2px; }
+        .msg.ai { background: white; border: 1px solid #e5e7eb; border-bottom-left-radius: 2px; color: #0f172a; }
         .trace-meta { margin: -6px 0 16px; padding: 8px 10px; border-radius: 6px; background: #f8fafc; color: #64748b; font-size: 12px; line-height: 1.6; border: 1px dashed #cbd5e1; white-space: pre-wrap; max-width: 85%; }
-        
+        .trace-row { display: flex; justify-content: flex-start; }
+        .trace-meta { max-width: min(85%, 720px); }
+        .composer { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+        .composer textarea { width: 100%; min-height: 54px; max-height: 180px; resize: vertical; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font: inherit; }
+        .composer-actions { display: flex; gap: 10px; align-items: center; }
+        .secondary-btn { background: #e2e8f0; color: #334155; }
+        .secondary-btn:hover { background: #cbd5e1; }
         .flex { display: flex; gap: 10px; }
 
         /* 订单表格样式 */
@@ -81,19 +93,33 @@
     <div class="left-panel">
         
         <div class="card">
-            <h2>💬 智能购票客服助手 (支持代买票/退票/查规定)</h2>
-            <p style="font-size: 14px; color: #666;">
-                Agent 已具备查票、买票、退票、查单工具。可以直接说："帮我买合肥南到北京南明天的票"。
-            </p>
-            
-            <div class="chat-area" id="chatArea">
-                <div class="msg ai">你好！我是 12306 智能客服。<br>我可以帮你查询规章制度，也可以直接帮你购买高铁票、退票或查询订单。请问有什么可以帮您？</div>
-            </div>
+            <div class="chat-shell">
+                <div>
+                    <h2>💬 智能购票客服助手</h2>
+                    <div class="chat-toolbar">
+                        <p style="font-size: 14px; color: #666; margin: 0;">
+                            现在直接连 Python Agent，多轮对话、动作执行、政策 RAG 和流式输出都在这里完成。
+                        </p>
+                        <span class="chat-status" id="agentStatus">未连接</span>
+                    </div>
+                </div>
 
-            <form id="askForm" class="flex" onsubmit="return false;">
-                <input type="text" id="questionInput" placeholder="输入问题或指令，例如：买票、退票、儿童票多高免票？" required>
-                <button type="button" class="btn" id="askBtn" onclick="askQuestion()">发送消息</button>
-            </form>
+                <div class="chat-area" id="chatArea">
+                    <div class="msg-row ai">
+                        <div class="msg ai">你好！我是 12306 智能客服。你可以直接问我查票、买票、退票、查订单，或者问规章制度问题。</div>
+                    </div>
+                </div>
+
+                <form id="askForm" onsubmit="return false;">
+                    <div class="composer">
+                        <textarea id="questionInput" placeholder="输入问题或指令，例如：帮我查一下所有车次；学生票退票手续费怎么算；帮我买明天南京南到杭州东的票" required></textarea>
+                        <div class="composer-actions">
+                            <button type="button" class="btn secondary-btn" id="clearChatBtn" onclick="clearCurrentSession()">清空会话</button>
+                            <button type="button" class="btn" id="askBtn" onclick="askQuestion()">发送</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card">
@@ -132,7 +158,8 @@
 <script>
     let myToken = "";
     let myUsername = "";
-    const sessionId = "user-" + Math.random().toString(36).substr(2, 9);
+    const PYTHON_AGENT_BASE_URL = 'http://127.0.0.1:8898';
+    let sessionId = "user-" + Math.random().toString(36).substr(2, 9);
     let sseSource = null;
 
     function saveLoginState() {
@@ -239,6 +266,13 @@
                 mainContent.style.pointerEvents = 'none';
                 document.getElementById('userInfo').style.display = 'none';
             });
+    }
+
+    function setAgentStatus(text, tone = 'idle') {
+        const node = document.getElementById('agentStatus');
+        if (!node) return;
+        node.innerText = text;
+        node.style.color = tone === 'ok' ? '#059669' : tone === 'busy' ? '#d97706' : tone === 'error' ? '#dc2626' : '#64748b';
     }
 
     function shouldUseStreaming(question) {
@@ -389,7 +423,9 @@
     }
 
     async function askQuestionSync(question, aiMsgDiv, traceNode, askBtn) {
-        const response = await fetch(`/rag/ask?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&token=${encodeURIComponent(myToken)}`);
+        const response = await fetch(
+            `${PYTHON_AGENT_BASE_URL}/ask?q=${encodeURIComponent(question)}&sessionId=${encodeURIComponent(sessionId)}&username=${encodeURIComponent(myUsername)}&token=${encodeURIComponent(myToken || '')}`
+        );
         const data = await response.json();
         let resolveDrain;
         const drained = new Promise(resolve => {
@@ -402,10 +438,13 @@
         renderer.reset();
         if (traceNode) {
             traceNode.style.display = 'block';
-            traceNode.innerText = '当前已回退到同步接口，阶段耗时仅对流式链路展示。';
+            traceNode.innerText = '当前已回退到同步接口。';
         }
-        if (data && data.code === 200 && data.data) {
-            renderer.push(data.data);
+        if (data && data.answer) {
+            if (data.tool_result) {
+                renderTrace(traceNode, data.tool_result);
+            }
+            renderer.push(data.answer);
             renderer.complete();
             await drained;
             return;
@@ -421,20 +460,21 @@
             askBtn.innerText = '发送消息';
             maybeRefreshOrders(question);
         });
-        const url = `/rag/ask/stream?sessionId=${encodeURIComponent(sessionId)}&q=${encodeURIComponent(question)}&token=${encodeURIComponent(myToken)}`;
+        const url = `${PYTHON_AGENT_BASE_URL}/ask/stream?q=${encodeURIComponent(question)}&sessionId=${encodeURIComponent(sessionId)}&username=${encodeURIComponent(myUsername)}&token=${encodeURIComponent(myToken || '')}`;
 
         if (sseSource) sseSource.close();
         sseSource = new EventSource(url);
 
         sseSource.onopen = function() {
             renderer.reset();
+            setAgentStatus('已连接，正在处理', 'busy');
             if (traceNode) {
                 traceNode.style.display = 'none';
                 traceNode.innerText = '';
             }
         };
 
-        sseSource.addEventListener('meta', function(event) {
+        sseSource.addEventListener('trace', function(event) {
             try {
                 renderTrace(traceNode, JSON.parse(event.data));
             } catch (err) {
@@ -442,30 +482,48 @@
             }
         });
 
-        sseSource.onmessage = function(event) {
-            if (event.data === "[DONE]") {
-                sseSource.close();
-                renderer.complete();
-                return;
+        sseSource.addEventListener('error', function(event) {
+            try {
+                const payload = JSON.parse(event.data);
+                aiMsgDiv.innerText = `❌ ${payload.message || '流式调用失败'}`;
+            } catch (err) {
+                aiMsgDiv.innerText = '❌ 流式调用失败';
             }
+            setAgentStatus('请求失败', 'error');
+        });
 
+        sseSource.addEventListener('final_answer', function() {
+            setAgentStatus('已完成', 'ok');
+        });
+
+        sseSource.addEventListener('message', function(event) {
             renderer.push(event.data.replace(/\\n/g, '\n'));
-        };
+        });
+
+        sseSource.addEventListener('done', function() {
+            sseSource.close();
+            renderer.complete();
+            setAgentStatus('已完成', 'ok');
+        });
 
         sseSource.onerror = function() {
             sseSource.close();
             if (!renderer.hasContent()) {
+                setAgentStatus('流式断开，回退同步请求', 'busy');
                 askQuestionSync(question, aiMsgDiv, traceNode, askBtn)
                     .catch(() => {
                         aiMsgDiv.innerText = "❌ 服务器异常断开，请稍后重试。";
+                        setAgentStatus('请求失败', 'error');
                     })
                     .finally(() => {
                         askBtn.disabled = false;
                         askBtn.innerText = '发送消息';
+                        setAgentStatus('已完成', 'ok');
                     });
                 return;
             }
             renderer.complete();
+            setAgentStatus('已完成', 'ok');
         };
     }
 
@@ -482,17 +540,24 @@
         appendMessage('user', question);
         input.value = ''; // 清空输入框
         askBtn.disabled = true;
-        askBtn.innerText = '大模型思考规划中...';
+        askBtn.innerText = '处理中...';
+        setAgentStatus('正在规划与执行', 'busy');
 
         // 2. 准备机器人回答的气泡
         const aiMsgDiv = document.createElement('div');
+        const aiRow = document.createElement('div');
+        aiRow.className = 'msg-row ai';
         aiMsgDiv.className = 'msg ai';
         aiMsgDiv.innerText = '正在思考如何使用工具或检索知识库...';
-        chatArea.appendChild(aiMsgDiv);
+        aiRow.appendChild(aiMsgDiv);
+        chatArea.appendChild(aiRow);
         const traceDiv = document.createElement('div');
+        const traceRow = document.createElement('div');
+        traceRow.className = 'trace-row';
         traceDiv.className = 'trace-meta';
         traceDiv.style.display = 'none';
-        chatArea.appendChild(traceDiv);
+        traceRow.appendChild(traceDiv);
+        chatArea.appendChild(traceRow);
         chatArea.scrollTop = chatArea.scrollHeight;
 
         try {
@@ -513,16 +578,40 @@
             aiMsgDiv.innerText = "❌ 问答失败，请稍后重试。";
             askBtn.disabled = false;
             askBtn.innerText = '发送消息';
+            setAgentStatus('请求失败', 'error');
         }
     }
 
     function appendMessage(role, text) {
         const chatArea = document.getElementById('chatArea');
+        const rowDiv = document.createElement('div');
+        rowDiv.className = `msg-row ${role}`;
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg ${role}`;
         msgDiv.innerText = text;
-        chatArea.appendChild(msgDiv);
+        rowDiv.appendChild(msgDiv);
+        chatArea.appendChild(rowDiv);
         chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    async function clearCurrentSession() {
+        if (sseSource) {
+            sseSource.close();
+            sseSource = null;
+        }
+        try {
+            await fetch(`${PYTHON_AGENT_BASE_URL}/debug/session/${encodeURIComponent(sessionId)}/clear`, { method: 'POST' });
+        } catch (err) {
+            console.warn('清理会话失败', err);
+        }
+        sessionId = "user-" + Math.random().toString(36).substr(2, 9);
+        const chatArea = document.getElementById('chatArea');
+        chatArea.innerHTML = `
+            <div class="msg-row ai">
+                <div class="msg ai">会话已清空。你可以继续问我查票、买票、退票、订单或政策问题。</div>
+            </div>
+        `;
+        setAgentStatus('会话已重置', 'idle');
     }
 
     function fallbackCopyText(text) {
@@ -578,8 +667,11 @@
             .catch(err => appendMessage('ai', "支付失败：" + err.message));
     }
 
-    document.getElementById('questionInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') askQuestion();
+    document.getElementById('questionInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            askQuestion();
+        }
     });
 
     // --- 4. 知识库上传逻辑 ---
@@ -651,7 +743,20 @@
         const userInfo = document.getElementById('userInfo');
         userInfo.innerText = `👤 当前登录：${savedUsername}`;
         userInfo.style.display = 'block';
+        setAgentStatus('已登录，等待提问', 'ok');
         loadOrders();
+    })();
+
+    (async function checkPythonAgentHealth() {
+        try {
+            const response = await fetch(`${PYTHON_AGENT_BASE_URL}/health`);
+            if (!response.ok) {
+                throw new Error('health check failed');
+            }
+            setAgentStatus('Python Agent 在线', 'ok');
+        } catch (err) {
+            setAgentStatus('Python Agent 未连接', 'error');
+        }
     })();
 </script>
 </body>

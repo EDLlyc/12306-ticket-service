@@ -236,6 +236,16 @@ pip install -r requirements.txt
 python evaluate.py
 ```
 
+可切换评测目标：
+
+```bash
+# 评 Java RAG
+RAG_TARGET=java_rag python evaluate.py
+
+# 评 Python Agent
+RAG_TARGET=python_agent python evaluate.py
+```
+
 ### 压测报告
 项目包含以下 JMeter 压测脚本：
 
