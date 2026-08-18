@@ -1,4 +1,19 @@
-# 12306 Ticket Service & AI Assistant 🚅
+<p align="center">
+  <picture>
+    <source srcset="./assets/project-logo.png" media="(prefers-color-scheme: dark)">
+    <source srcset="./assets/project-logo.png" media="(prefers-color-scheme: light)">
+    <img
+      src="./assets/project-logo.png"
+      alt="12306 Ticket Service"
+      width="560"
+      style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;"
+    >
+  </picture>
+</p>
+
+<p align="center">
+  <strong>A high-concurrency ticketing core with a tool-using RAG agent.</strong>
+</p>
 
 这是一个基于 Spring Boot 3.x 构建的仿 12306 票务系统，集成了**高并发秒杀架构**与**基于 RAG 的 AI 智能助理**。
 
